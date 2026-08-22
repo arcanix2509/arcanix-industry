@@ -1,63 +1,107 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8"/>
-		<title>AI Multi-Vendor Marketplace</title>
-		<link rel="stylesheet" href="style.css"/>
-	</head>
-	<body>
+<head>
+  <meta charset="UTF-8"/>
+  <title>AI Multi-Vendor Marketplace</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
 
-		<nav>
-			<h2>AI Marketplace</h2>
-			<div>
-				<a href="index.html">Home</a>
-				<a href="add-product.html">Vendor Portal (+ Add Product)</a>
-			</div>
-		</nav>
+  <nav>
+    <h2>AI Marketplace</h2>
+    <div style="display: flex; align-items: center; gap: 15px;">
+      <a href="index.html">Home</a>
+      <a href="ai-advisor.html" style="color:#60a5fa; font-weight:bold;">🤖 AI Advisor</a>
+      
+      <!-- Admin Only Link (Initially Hidden) -->
+      <a href="add-product.html" id="admin-link" style="display: none; background: #e11d48; padding: 5px 10px; border-radius: 4px;">Admin Portal (+ Add Product)</a>
 
-		<div class="container">
-			<h1 style="margin-bottom: 20px;">Explore Products</h1>
-			<div id="product-grid" class="grid">
-				<p>Loading products from Firestore...</p>
-			</div>
-		</div>
+      <!-- Auth Action Button -->
+      <button id="auth-btn" class="btn" style="width: auto; margin:0; padding: 6px 12px; font-size: 0.85rem; background: #16a34a;">Login with Google</button>
+    </div>
+  </nav>
 
-		<script type="module">
-			import { db } from './firebase-config.js';
-			import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  <div class="container">
+    <h1 style="margin-bottom: 20px;">Explore Products</h1>
+    <div id="product-grid" class="grid">
+      <p>Loading products from Firestore...</p>
+    </div>
+  </div>
 
-			async function loadProducts() {
-			const grid = document.getElementById('product-grid');
-			try {
-			const querySnapshot = await getDocs(collection(db, "products"));
-			grid.innerHTML = '';
+  <script type="module">
+    import { db, auth, googleProvider, signInWithPopup, signOut, onAuthStateChanged, ADMIN_EMAIL } from './firebase-config.js';
+    import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-			if(querySnapshot.empty) {
-			grid.innerHTML = '<p>No products added yet. Go to Vendor Portal to add one!</p>';
-			return;
-			}
+    const adminLink = document.getElementById('admin-link');
+    const authBtn = document.getElementById('auth-btn');
 
-			querySnapshot.forEach((doc) => {
-			const product = doc.data();
-			const cardHtml = `
-			<div class="card">
-				<img src="${product.imageUrl}" alt="${product.title}"/>
-				<div class="card-content">
-					<div class="card-title">${product.title}</div>
-					<div class="card-price">$${product.price}</div>
-					<a href="product.html?id=${doc.id}" class="btn">View &amp; Ask AI Assistant</a>
-				</div>
-			</div>
-			`;
-			grid.innerHTML += cardHtml;
-			});
-			} catch (error) {
-			console.error("Error loading products:", error);
-			grid.innerHTML = '<p style="color:red;">Error loading products. Check Firestore Security Rules or console logs.</p>';
-			}
-			}
+    // 1. Google Authentication Handler
+    authBtn.addEventListener('click', async () => {
+      if (auth.currentUser) {
+        await signOut(auth);
+        alert("Logged out successfully.");
+      } else {
+        try {
+          await signInWithPopup(auth, googleProvider);
+        } catch (err) {
+          console.error("Auth Error:", err);
+          alert("Login failed: " + err.message);
+        }
+      }
+    });
 
-			loadProducts();
-		</script>
-	</body>
+    // 2. Auth State Observer
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        authBtn.innerText = `Logout (${user.displayName.split(' ')[0]})`;
+        authBtn.style.background = "#dc2626";
+
+        // Check Admin Email Rights
+        if (user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+          adminLink.style.display = "inline-block";
+        } else {
+          adminLink.style.display = "none";
+        }
+      } else {
+        authBtn.innerText = "Login with Google";
+        authBtn.style.background = "#16a34a";
+        adminLink.style.display = "none";
+      }
+    });
+
+    // 3. Load Products from Firestore
+    async function loadProducts() {
+      const grid = document.getElementById('product-grid');
+      try {
+        const querySnapshot = await getDocs(collection(db, "products"));
+        grid.innerHTML = '';
+
+        if(querySnapshot.empty) {
+          grid.innerHTML = '<p>No products added yet.</p>';
+          return;
+        }
+
+        querySnapshot.forEach((doc) => {
+          const product = doc.data();
+          const cardHtml = `
+            <div class="card">
+              <img src="${product.imageUrl}" alt="${product.title}"/>
+              <div class="card-content">
+                <div class="card-title">${product.title}</div>
+                <div class="card-price">$${product.price}</div>
+                <a href="product.html?id=${doc.id}" class="btn">View &amp; Ask AI Assistant</a>
+              </div>
+            </div>
+          `;
+          grid.innerHTML += cardHtml;
+        });
+      } catch (error) {
+        console.error("Error loading products:", error);
+        grid.innerHTML = '<p style="color:red;">Error loading products. Check Firestore Security Rules.</p>';
+      }
+    }
+
+    loadProducts();
+  </script>
+</body>
 </html>
