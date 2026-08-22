@@ -3,35 +3,41 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>AI Marketplace</title>
+  <title>AI Store</title>
   <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
 
   <nav>
-    <h2>⚡ AI Marketplace</h2>
-    <div style="display: flex; align-items: center; gap: 20px;">
+    <h2>⚡ AI Store</h2>
+    <button class="menu-toggle" id="menu-toggle">☰</button>
+    <div class="nav-links" id="nav-links">
       <a href="index.html">Home</a>
-      <a href="ai-advisor.html" style="color: #a78bfa; font-weight: 600;">✨ AI Advisor</a>
-      <a href="admin.html" id="admin-panel-link" style="display: none; background: rgba(225, 29, 72, 0.2); border: 1px solid #e11d48; color: #fda4af; padding: 6px 14px; border-radius: 8px; text-decoration: none;">⚙️ Admin</a>
-      <a href="auth.html" id="nav-auth-btn" class="btn btn-primary" style="width: auto; padding: 7px 16px;">Login</a>
+      <a href="ai-advisor.html" style="color: var(--primary);">✨ AI Advisor</a>
+      <a href="admin.html" id="admin-panel-link" style="display: none; color: var(--danger);">⚙️ Admin</a>
+      <a href="auth.html" id="nav-auth-btn" class="btn btn-primary">Login</a>
     </div>
   </nav>
 
   <div class="container">
     <div style="margin-bottom: 30px;">
-      <h1 style="font-size: 2rem; font-weight: 700;">Explore Products</h1>
-      <p style="color: var(--text-muted); margin-top: 5px;">Discover digital AI assets & tools curated for creators.</p>
+      <h1 style="font-size: 1.8rem; font-weight: 700;">Marketplace Assets</h1>
+      <p style="color: var(--text-muted); font-size: 0.9rem;">Find best AI tools and digital products.</p>
     </div>
 
     <div id="product-grid" class="grid">
-      <p style="color: var(--text-muted);">Loading catalog...</p>
+      <p style="color: var(--text-muted);">Loading products...</p>
     </div>
   </div>
 
   <script type="module">
     import { db, auth, onAuthStateChanged, ADMIN_EMAIL } from './firebase-config.js';
     import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    // Mobile Navbar Toggle
+    const menuToggle = document.getElementById('menu-toggle');
+    const navLinks = document.getElementById('nav-links');
+    menuToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
 
     const adminPanelLink = document.getElementById('admin-panel-link');
     const navAuthBtn = document.getElementById('nav-auth-btn');
@@ -55,7 +61,7 @@
         grid.innerHTML = '';
 
         if (querySnapshot.empty) {
-          grid.innerHTML = '<p style="color: var(--text-muted);">No products available right now.</p>';
+          grid.innerHTML = '<p style="color: var(--text-muted);">No products found.</p>';
           return;
         }
 
@@ -67,13 +73,13 @@
               <div class="card-content">
                 <div class="card-title">${product.title}</div>
                 <div class="card-price">$${product.price}</div>
-                <a href="product.html?id=${docSnap.id}" class="btn btn-primary">View Details</a>
+                <a href="product.html?id=${docSnap.id}" class="btn btn-primary" style="width:100%;">View Details</a>
               </div>
             </div>
           `;
         });
       } catch (error) {
-        grid.innerHTML = '<p style="color:#f43f5e;">Error loading items from database.</p>';
+        grid.innerHTML = '<p style="color: var(--danger);">Error loading products.</p>';
       }
     }
 
