@@ -2,29 +2,30 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <title>AI Multi-Vendor Marketplace</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Marketplace</title>
   <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
 
   <nav>
-    <h2>AI Marketplace</h2>
-    <div style="display: flex; align-items: center; gap: 15px;">
+    <h2>⚡ AI Marketplace</h2>
+    <div style="display: flex; align-items: center; gap: 20px;">
       <a href="index.html">Home</a>
-      <a href="ai-advisor.html" style="color:#60a5fa; font-weight:bold;">✨ AI Advisor</a>
-      
-      <!-- Hidden Admin Panel Link (Shows only for Admin) -->
-      <a href="admin.html" id="admin-panel-link" style="display: none; background: #e11d48; padding: 6px 12px; border-radius: 6px; color: white; text-decoration: none; font-size: 0.9rem;">⚙️ Admin Panel</a>
-
-      <!-- Account Auth Link -->
-      <a href="auth.html" id="nav-auth-btn" style="background: #2563eb; padding: 6px 12px; border-radius: 6px; color: white; text-decoration: none; font-size: 0.9rem;">Login / Register</a>
+      <a href="ai-advisor.html" style="color: #a78bfa; font-weight: 600;">✨ AI Advisor</a>
+      <a href="admin.html" id="admin-panel-link" style="display: none; background: rgba(225, 29, 72, 0.2); border: 1px solid #e11d48; color: #fda4af; padding: 6px 14px; border-radius: 8px; text-decoration: none;">⚙️ Admin</a>
+      <a href="auth.html" id="nav-auth-btn" class="btn btn-primary" style="width: auto; padding: 7px 16px;">Login</a>
     </div>
   </nav>
 
   <div class="container">
-    <h1 style="margin-bottom: 20px;">Explore Products</h1>
+    <div style="margin-bottom: 30px;">
+      <h1 style="font-size: 2rem; font-weight: 700;">Explore Products</h1>
+      <p style="color: var(--text-muted); margin-top: 5px;">Discover digital AI assets & tools curated for creators.</p>
+    </div>
+
     <div id="product-grid" class="grid">
-      <p>Loading products from Firestore...</p>
+      <p style="color: var(--text-muted);">Loading catalog...</p>
     </div>
   </div>
 
@@ -35,25 +36,18 @@
     const adminPanelLink = document.getElementById('admin-panel-link');
     const navAuthBtn = document.getElementById('nav-auth-btn');
 
-    // 🔒 1. Auth Observer: Check User Role & Dynamic Navigation
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        navAuthBtn.innerText = `Account (${user.displayName ? user.displayName.split(' ')[0] : 'User'})`;
-        navAuthBtn.style.background = "#059669"; // Green tint when logged in
-        
+        navAuthBtn.innerText = user.displayName ? user.displayName.split(' ')[0] : 'Account';
         if (user.email && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
           adminPanelLink.style.display = "inline-block";
-        } else {
-          adminPanelLink.style.display = "none";
         }
       } else {
-        navAuthBtn.innerText = "Login / Register";
-        navAuthBtn.style.background = "#2563eb";
+        navAuthBtn.innerText = "Login";
         adminPanelLink.style.display = "none";
       }
     });
 
-    // 📦 2. Fetch & Render Catalog Items
     async function loadProducts() {
       const grid = document.getElementById('product-grid');
       try {
@@ -61,27 +55,25 @@
         grid.innerHTML = '';
 
         if (querySnapshot.empty) {
-          grid.innerHTML = '<p>No products added yet.</p>';
+          grid.innerHTML = '<p style="color: var(--text-muted);">No products available right now.</p>';
           return;
         }
 
-        querySnapshot.forEach((doc) => {
-          const product = doc.data();
-          const cardHtml = `
+        querySnapshot.forEach((docSnap) => {
+          const product = docSnap.data();
+          grid.innerHTML += `
             <div class="card">
-              <img src="${product.imageUrl}" alt="${product.title}"/>
+              <img src="${product.imageUrl || 'https://via.placeholder.com/300'}" alt="${product.title}"/>
               <div class="card-content">
                 <div class="card-title">${product.title}</div>
                 <div class="card-price">$${product.price}</div>
-                <a href="product.html?id=${doc.id}" class="btn">View &amp; Ask Gemini AI</a>
+                <a href="product.html?id=${docSnap.id}" class="btn btn-primary">View Details</a>
               </div>
             </div>
           `;
-          grid.innerHTML += cardHtml;
         });
       } catch (error) {
-        console.error("Error loading products:", error);
-        grid.innerHTML = '<p style="color:red;">Error loading products. Check Firestore Security Rules or console logs.</p>';
+        grid.innerHTML = '<p style="color:#f43f5e;">Error loading items from database.</p>';
       }
     }
 
