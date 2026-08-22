@@ -11,13 +11,13 @@
     <h2>AI Marketplace</h2>
     <div style="display: flex; align-items: center; gap: 15px;">
       <a href="index.html">Home</a>
-      <a href="ai-advisor.html" style="color:#60a5fa; font-weight:bold;">🤖 AI Advisor</a>
+      <a href="ai-advisor.html" style="color:#60a5fa; font-weight:bold;">✨ AI Advisor</a>
       
-      <!-- Admin Only Link (Initially Hidden) -->
-      <a href="add-product.html" id="admin-link" style="display: none; background: #e11d48; padding: 5px 10px; border-radius: 4px;">Admin Portal (+ Add Product)</a>
+      <!-- Hidden Admin Panel Link (Shows only for Admin) -->
+      <a href="admin.html" id="admin-panel-link" style="display: none; background: #e11d48; padding: 6px 12px; border-radius: 6px; color: white; text-decoration: none; font-size: 0.9rem;">⚙️ Admin Panel</a>
 
-      <!-- Auth Action Button -->
-      <button id="auth-btn" class="btn" style="width: auto; margin:0; padding: 6px 12px; font-size: 0.85rem; background: #16a34a;">Login with Google</button>
+      <!-- Account Auth Link -->
+      <a href="auth.html" id="nav-auth-btn" style="background: #2563eb; padding: 6px 12px; border-radius: 6px; color: white; text-decoration: none; font-size: 0.9rem;">Login / Register</a>
     </div>
   </nav>
 
@@ -29,54 +29,38 @@
   </div>
 
   <script type="module">
-    import { db, auth, googleProvider, signInWithPopup, signOut, onAuthStateChanged, ADMIN_EMAIL } from './firebase-config.js';
+    import { db, auth, onAuthStateChanged, ADMIN_EMAIL } from './firebase-config.js';
     import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    const adminLink = document.getElementById('admin-link');
-    const authBtn = document.getElementById('auth-btn');
+    const adminPanelLink = document.getElementById('admin-panel-link');
+    const navAuthBtn = document.getElementById('nav-auth-btn');
 
-    // 1. Google Authentication Handler
-    authBtn.addEventListener('click', async () => {
-      if (auth.currentUser) {
-        await signOut(auth);
-        alert("Logged out successfully.");
-      } else {
-        try {
-          await signInWithPopup(auth, googleProvider);
-        } catch (err) {
-          console.error("Auth Error:", err);
-          alert("Login failed: " + err.message);
-        }
-      }
-    });
-
-    // 2. Auth State Observer
+    // 🔒 1. Auth Observer: Check User Role & Dynamic Navigation
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        authBtn.innerText = `Logout (${user.displayName.split(' ')[0]})`;
-        authBtn.style.background = "#dc2626";
-
-        // Check Admin Email Rights
-        if (user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
-          adminLink.style.display = "inline-block";
+        navAuthBtn.innerText = `Account (${user.displayName ? user.displayName.split(' ')[0] : 'User'})`;
+        navAuthBtn.style.background = "#059669"; // Green tint when logged in
+        
+        if (user.email && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+          adminPanelLink.style.display = "inline-block";
         } else {
-          adminLink.style.display = "none";
+          adminPanelLink.style.display = "none";
         }
       } else {
-        authBtn.innerText = "Login with Google";
-        authBtn.style.background = "#16a34a";
-        adminLink.style.display = "none";
+        navAuthBtn.innerText = "Login / Register";
+        navAuthBtn.style.background = "#2563eb";
+        adminPanelLink.style.display = "none";
       }
     });
 
-    // 3. Load Products from Firestore
+    // 📦 2. Fetch & Render Catalog Items
     async function loadProducts() {
       const grid = document.getElementById('product-grid');
       try {
         const querySnapshot = await getDocs(collection(db, "products"));
         grid.innerHTML = '';
 
-        if(querySnapshot.empty) {
+        if (querySnapshot.empty) {
           grid.innerHTML = '<p>No products added yet.</p>';
           return;
         }
@@ -89,7 +73,7 @@
               <div class="card-content">
                 <div class="card-title">${product.title}</div>
                 <div class="card-price">$${product.price}</div>
-                <a href="product.html?id=${doc.id}" class="btn">View &amp; Ask AI Assistant</a>
+                <a href="product.html?id=${doc.id}" class="btn">View &amp; Ask Gemini AI</a>
               </div>
             </div>
           `;
@@ -97,7 +81,7 @@
         });
       } catch (error) {
         console.error("Error loading products:", error);
-        grid.innerHTML = '<p style="color:red;">Error loading products. Check Firestore Security Rules.</p>';
+        grid.innerHTML = '<p style="color:red;">Error loading products. Check Firestore Security Rules or console logs.</p>';
       }
     }
 
