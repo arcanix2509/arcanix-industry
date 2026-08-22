@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Add Product - Vendor Dashboard</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8"/>
+  <title>Admin Dashboard - Add Product</title>
+  <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
 
   <nav>
-    <h2>Vendor Portal</h2>
+    <h2>Admin Portal</h2>
     <div>
       <a href="index.html">Back to Home</a>
     </div>
@@ -20,25 +20,25 @@
       <form id="add-product-form">
         <div class="form-group">
           <label>Product Title</label>
-          <input type="text" id="title" required placeholder="e.g. Wireless Noise Canceling Headphones">
+          <input type="text" id="title" required placeholder="e.g. Wireless Noise Canceling Headphones"/>
         </div>
         <div class="form-group">
           <label>Price ($)</label>
-          <input type="number" id="price" required placeholder="e.g. 199">
+          <input type="number" id="price" required placeholder="e.g. 199"/>
         </div>
         <div class="form-group">
-          <label>Product Description & Specs</label>
+          <label>Product Description &amp; Specs</label>
           <textarea id="description" rows="4" required placeholder="Mention features, warranty, stock info..."></textarea>
         </div>
         <div class="form-group">
           <label>Select Product Image (Auto Link Convert)</label>
-          <input type="file" id="image" accept="image/*" required>
+          <input type="file" id="image" accept="image/*" required/>
         </div>
 
         <div class="form-group" id="link-preview-group" style="display: none;">
           <label style="color: #16a34a; font-weight: bold;">Image Uploaded Successfully!</label>
-          <input type="text" id="generated-image-url" readonly style="background: #f1f5f9; color: #475569; font-size: 0.85rem;">
-          <img id="preview-img" src="" style="max-height: 100px; margin-top: 10px; border-radius: 6px;">
+          <input type="text" id="generated-image-url" readonly style="background: #f1f5f9; color: #475569; font-size: 0.85rem;"/>
+          <img id="preview-img" src="" alt="Preview" style="max-height: 100px; margin-top: 10px; border-radius: 6px;"/>
         </div>
 
         <button type="submit" id="submit-btn" class="btn">Publish Product</button>
@@ -47,7 +47,7 @@
   </div>
 
   <script type="module">
-    import { db, IMGBB_API_KEY } from './firebase-config.js';
+    import { db, auth, onAuthStateChanged, ADMIN_EMAIL, IMGBB_API_KEY } from './firebase-config.js';
     import { collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const form = document.getElementById('add-product-form');
@@ -59,7 +59,15 @@
 
     let uploadedImageUrl = "";
 
-    // 1. File Selection -> Uploads to ImgBB and Gets Direct Link
+    // 🔒 1. Admin Authorization Security Guard
+    onAuthStateChanged(auth, (user) => {
+      if (!user || user.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+        alert("Access Denied: Only Administrator accounts can publish products!");
+        window.location.href = "index.html";
+      }
+    });
+
+    // 📸 2. File Selection -> Image Upload to ImgBB
     imageInput.addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -84,7 +92,7 @@
           previewImg.src = uploadedImageUrl;
           linkPreviewGroup.style.display = "block";
         } else {
-          alert("ImgBB Upload Failed: Check your internet or ImgBB key.");
+          alert("ImgBB Upload Failed: Check your ImgBB key.");
         }
       } catch (err) {
         console.error("Image Upload Error:", err);
@@ -95,7 +103,7 @@
       }
     });
 
-    // 2. Submit Form Data to Firestore
+    // 🚀 3. Submit Form Data to Firestore
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       
@@ -116,7 +124,8 @@
           price: Number(price),
           description: description,
           imageUrl: uploadedImageUrl,
-          createdAt: new Date()
+          createdAt: new Date(),
+          createdBy: auth.currentUser ? auth.currentUser.email : "Admin"
         });
 
         alert("🎉 Product Successfully Published!");
@@ -124,7 +133,7 @@
 
       } catch (error) {
         console.error("Firestore Save Error:", error);
-        alert("Firestore Error: " + error.message + "\n\nMake sure your Firestore Rules allow reads and writes!");
+        alert("Firestore Error: " + error.message);
         submitBtn.innerText = "Publish Product";
         submitBtn.disabled = false;
       }
