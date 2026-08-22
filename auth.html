@@ -4,6 +4,13 @@
   <meta charset="UTF-8"/>
   <title>Login / Sign Up - AI Marketplace</title>
   <link rel="stylesheet" href="style.css"/>
+  <style>
+    .auth-toggle { display: flex; justify-content: center; gap: 20px; margin-bottom: 20px; }
+    .auth-toggle button { background: none; border: none; font-size: 1.1rem; font-weight: bold; cursor: pointer; color: #64748b; border-bottom: 2px solid transparent; padding-bottom: 5px; }
+    .auth-toggle button.active { color: #2563eb; border-color: #2563eb; }
+    .divider { margin: 20px 0; border-bottom: 1px solid #e2e8f0; position: relative; }
+    .divider span { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: white; padding: 0 10px; color: #94a3b8; font-size: 0.8rem; }
+  </style>
 </head>
 <body>
 
@@ -15,68 +22,162 @@
   </nav>
 
   <div class="container" style="max-width: 450px;">
-    <div class="form-card" style="text-align: center; margin-top: 50px;">
-      <h2 style="margin-bottom: 10px;">Welcome Back</h2>
-      <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 25px;">Sign in to access your account &amp; admin controls</p>
+    <div class="form-card" style="margin-top: 30px;">
       
-      <div id="user-profile-box" style="display: none; margin-bottom: 20px;">
+      <!-- Logged In User View -->
+      <div id="user-profile-box" style="display: none; text-align: center;">
         <img id="user-avatar" src="" alt="Avatar" style="width: 80px; height: 80px; border-radius: 50%; margin-bottom: 10px; border: 2px solid #2563eb;"/>
         <h3 id="user-name"></h3>
-        <p id="user-email" style="color: #64748b; font-size: 0.85rem;"></p>
+        <p id="user-email" style="color: #64748b; font-size: 0.85rem; margin-bottom: 20px;"></p>
+        
+        <a href="admin.html" id="go-admin-btn" class="btn" style="display: none; background: #e11d48; margin-bottom: 10px;">Go to Admin Panel</a>
+        <button id="logout-btn" class="btn" style="background: #dc2626;">Sign Out</button>
       </div>
 
-      <button id="google-login-btn" class="btn" style="background: #4285F4; font-size: 1rem; padding: 12px;">
-        Login with Google
-      </button>
+      <!-- Auth Forms -->
+      <div id="auth-forms-container">
+        <div class="auth-toggle">
+          <button id="tab-login" class="active">Login</button>
+          <button id="tab-register">Register</button>
+        </div>
 
-      <button id="logout-btn" class="btn" style="background: #dc2626; font-size: 1rem; padding: 12px; display: none;">
-        Sign Out
-      </button>
+        <!-- Login Form -->
+        <form id="login-form">
+          <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" id="login-email" required placeholder="name@example.com"/>
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="login-password" required placeholder="••••••••"/>
+          </div>
+          <button type="submit" class="btn" style="background: #2563eb;">Sign In</button>
+        </form>
+
+        <!-- Register Form -->
+        <form id="register-form" style="display: none;">
+          <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" id="reg-email" required placeholder="name@example.com"/>
+          </div>
+          <div class="form-group">
+            <label>Create Password</label>
+            <input type="password" id="reg-password" required placeholder="Minimum 6 characters"/>
+          </div>
+          <button type="submit" class="btn" style="background: #16a34a;">Create Account</button>
+        </form>
+
+        <div class="divider"><span>OR</span></div>
+
+        <button id="google-login-btn" class="btn" style="background: #ea4335;">
+          Continue with Google
+        </button>
+      </div>
+
     </div>
   </div>
 
   <script type="module">
-    import { auth, googleProvider, signInWithPopup, signOut, onAuthStateChanged, ADMIN_EMAIL } from './firebase-config.js';
+    import { 
+      auth, 
+      googleProvider, 
+      signInWithPopup, 
+      signOut, 
+      onAuthStateChanged, 
+      createUserWithEmailAndPassword, 
+      signInWithEmailAndPassword,
+      ADMIN_EMAIL 
+    } from './firebase-config.js';
 
-    const loginBtn = document.getElementById('google-login-btn');
-    const logoutBtn = document.getElementById('logout-btn');
+    const tabLogin = document.getElementById('tab-login');
+    const tabRegister = document.getElementById('tab-register');
+    const loginForm = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
+    
+    const authFormsContainer = document.getElementById('auth-forms-container');
     const userProfileBox = document.getElementById('user-profile-box');
     const userAvatar = document.getElementById('user-avatar');
     const userName = document.getElementById('user-name');
     const userEmail = document.getElementById('user-email');
+    const goAdminBtn = document.getElementById('go-admin-btn');
+    const logoutBtn = document.getElementById('logout-btn');
 
-    loginBtn.addEventListener('click', async () => {
+    // Tab Toggle
+    tabLogin.addEventListener('click', () => {
+      tabLogin.classList.add('active');
+      tabRegister.classList.remove('active');
+      loginForm.style.display = 'block';
+      registerForm.style.display = 'none';
+    });
+
+    tabRegister.addEventListener('click', () => {
+      tabRegister.classList.add('active');
+      tabLogin.classList.remove('active');
+      registerForm.style.display = 'block';
+      loginForm.style.display = 'none';
+    });
+
+    // Email/Password Register
+    registerForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('reg-email').value;
+      const password = document.getElementById('reg-password').value;
+
       try {
-        await signInWithPopup(auth, googleProvider);
+        await createUserWithEmailAndPassword(auth, email, password);
+        alert("Account Created Successfully!");
       } catch (err) {
-        alert("Login Error: " + err.message);
+        alert("Registration Failed: " + err.message);
       }
     });
 
-    logoutBtn.addEventListener('click', async () => {
-      await signOut(auth);
-      alert("Logged out successfully.");
+    // Email/Password Login
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        alert("Logged in successfully!");
+      } catch (err) {
+        alert("Login Failed: " + err.message);
+      }
     });
 
+    // Google Login
+    document.getElementById('google-login-btn').addEventListener('click', async () => {
+      try {
+        await signInWithPopup(auth, googleProvider);
+      } catch (err) {
+        alert("Google Login Error: " + err.message);
+      }
+    });
+
+    // Logout
+    logoutBtn.addEventListener('click', async () => {
+      await signOut(auth);
+      alert("Logged out.");
+    });
+
+    // Auth Observer
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        loginBtn.style.display = "none";
-        logoutBtn.style.display = "block";
+        authFormsContainer.style.display = "none";
         userProfileBox.style.display = "block";
         
-        userAvatar.src = user.photoURL || 'https://via.placeholder.com/80';
-        userName.innerText = user.displayName;
+        userAvatar.src = user.photoURL || 'https://via.placeholder.com/80?text=User';
+        userName.innerText = user.displayName || 'User Account';
         userEmail.innerText = user.email;
 
-        // Admin auto-redirect
+        // Check if logged in user is Admin
         if (user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
-          setTimeout(() => {
-            window.location.href = "admin.html";
-          }, 1200);
+          goAdminBtn.style.display = "block";
+        } else {
+          goAdminBtn.style.display = "none";
         }
       } else {
-        loginBtn.style.display = "block";
-        logoutBtn.style.display = "none";
+        authFormsContainer.style.display = "block";
         userProfileBox.style.display = "none";
       }
     });
