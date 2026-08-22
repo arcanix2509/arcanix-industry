@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8"/>
+		<title>AI Multi-Vendor Marketplace</title>
+		<link rel="stylesheet" href="style.css"/>
+	</head>
+	<body>
+
+		<nav>
+			<h2>AI Marketplace</h2>
+			<div>
+				<a href="index.html">Home</a>
+				<a href="add-product.html">Vendor Portal (+ Add Product)</a>
+			</div>
+		</nav>
+
+		<div class="container">
+			<h1 style="margin-bottom: 20px;">Explore Products</h1>
+			<div id="product-grid" class="grid">
+				<p>Loading products from Firestore...</p>
+			</div>
+		</div>
+
+		<script type="module">
+			import { db } from './firebase-config.js';
+			import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+			async function loadProducts() {
+			const grid = document.getElementById('product-grid');
+			try {
+			const querySnapshot = await getDocs(collection(db, "products"));
+			grid.innerHTML = '';
+
+			if(querySnapshot.empty) {
+			grid.innerHTML = '<p>No products added yet. Go to Vendor Portal to add one!</p>';
+			return;
+			}
+
+			querySnapshot.forEach((doc) => {
+			const product = doc.data();
+			const cardHtml = `
+			<div class="card">
+				<img src="${product.imageUrl}" alt="${product.title}"/>
+				<div class="card-content">
+					<div class="card-title">${product.title}</div>
+					<div class="card-price">$${product.price}</div>
+					<a href="product.html?id=${doc.id}" class="btn">View &amp; Ask AI Assistant</a>
+				</div>
+			</div>
+			`;
+			grid.innerHTML += cardHtml;
+			});
+			} catch (error) {
+			console.error("Error loading products:", error);
+			grid.innerHTML = '<p style="color:red;">Error loading products. Check Firestore Security Rules or console logs.</p>';
+			}
+			}
+
+			loadProducts();
+		</script>
+	</body>
+</html>

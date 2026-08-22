@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Product Details</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <nav>
+    <h2>AI Marketplace</h2>
+    <div>
+      <a href="index.html">Back to Home</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="product-detail-container">
+      
+      <!-- Left: Product Info -->
+      <div id="product-info">
+        <p>Loading details...</p>
+      </div>
+
+      <!-- Right: Groq AI Assistant -->
+      <div class="chat-box">
+        <div class="chat-header">⚡ Groq AI Sales Assistant</div>
+        <div class="chat-messages" id="chat-messages">
+          <div class="message bot-msg">Hello! Ask me anything about this product or request a deal!</div>
+        </div>
+        <form class="chat-input-form" id="chat-form">
+          <input type="text" id="chat-input" placeholder="Ask a question..." required>
+          <button type="submit" class="btn" style="width: auto; margin:0;">Send</button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+  <script type="module">
+    import { db, GROQ_API_KEY } from './firebase-config.js';
+    import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const productId = urlParams.get('id');
+    let currentProduct = null;
+
+    const productInfoContainer = document.getElementById('product-info');
+    const chatMessages = document.getElementById('chat-messages');
+    const chatForm = document.getElementById('chat-form');
+    const chatInput = document.getElementById('chat-input');
+
+    async function loadProductDetails() {
+      if (!productId) {
+        productInfoContainer.innerHTML = "<p>Product not found.</p>";
+        return;
+      }
+
+      const docRef = doc(db, "products", productId);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        currentProduct = docSnap.data();
+        productInfoContainer.innerHTML = `
+          <img src="${currentProduct.imageUrl}" alt="${currentProduct.title}">
+          <h1 style="margin-top: 15px;">${currentProduct.title}</h1>
+          <div class="card-price" style="margin: 10px 0;">$${currentProduct.price}</div>
+          <p style="color: #475569; line-height: 1.6;">${currentProduct.description}</p>
+        `;
+      } else {
+        productInfoContainer.innerHTML = "<p>Product does not exist!</p>";
+      }
+    }
+
+    chatForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const userText = chatInput.value.trim();
+      if (!userText || !currentProduct) return;
+
+      appendMessage(userText, 'user-msg');
+      chatInput.value = '';
+
+      const thinkingDiv = appendMessage('AI is thinking...', 'bot-msg');
+
+      try {
+        const systemPrompt = `
+          You are a polite AI Sales Representative for this product:
+          - Title: ${currentProduct.title}
+          - Price: $${currentProduct.price}
+          - Details: ${currentProduct.description}
+
+          Rules:
+          1. Answer questions based only on this product.
+          2. Maximum discount limit is 10%. Refuse requests higher than 10%.
+          3. Keep answers concise and persuasive.
+        `;
+
+        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${GROQ_API_KEY}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            model: "llama-3.3-70b-versatile",
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: userText }
+            ],
+            temperature: 0.5,
+            max_tokens: 300
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.choices && data.choices[0]) {
+          thinkingDiv.innerText = data.choices[0].message.content;
+        } else {
+          thinkingDiv.innerText = "Error: " + (data.error?.message || "Could not fetch response from Groq.");
+        }
+
+      } catch (err) {
+        console.error("Groq Error:", err);
+        thinkingDiv.innerText = "Connection failed.";
+      }
+    });
+
+    function appendMessage(text, className) {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = `message ${className}`;
+      msgDiv.innerText = text;
+      chatMessages.appendChild(msgDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+      return msgDiv;
+    }
+
+    loadProductDetails();
+  </script>
+</body>
+</html>
