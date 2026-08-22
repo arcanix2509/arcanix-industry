@@ -18,8 +18,8 @@ export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 export { signInWithPopup, signOut, onAuthStateChanged };
 
-// ⚠️ Yaha apni Admin Gmail ID replace kar do:
 export const ADMIN_EMAIL = "your-admin-email@gmail.com";
-
 export const IMGBB_API_KEY = "0298c2843fc0f575928ba0562d0fb697";
-export const GROQ_API_KEY = "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";
+
+// ⚡ Gemini API Key (Replaced)
+export const GEMINI_API_KEY = "AQ.Ab8RN6Ii8UOz6k3MjH_1LBGtFkl22QFHqU1-qCCksUfbg2n9GQ";
