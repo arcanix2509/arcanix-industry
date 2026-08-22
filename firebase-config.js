@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-// Firebase Configuration
 const firebaseConfig = {
   apiKey: "AIzaSyC8DIXVcymOd3-ImBuMjRfZ_u6VC4Iapkw",
   authDomain: "arcanix-portfolio.firebaseapp.com",
@@ -14,7 +14,12 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
+export const auth = getAuth(app);
+export const googleProvider = new GoogleAuthProvider();
+export { signInWithPopup, signOut, onAuthStateChanged };
 
-// API Keys
+// ⚠️ Yaha apni Admin Gmail ID replace kar do:
+export const ADMIN_EMAIL = "your-admin-email@gmail.com";
+
 export const IMGBB_API_KEY = "0298c2843fc0f575928ba0562d0fb697";
 export const GROQ_API_KEY = "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";
