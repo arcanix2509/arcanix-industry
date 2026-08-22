@@ -3,30 +3,65 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>AI Store</title>
+  <title>FlipStore - Online Shopping Site</title>
   <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
 
+  <!-- E-Commerce Header -->
   <nav>
-    <h2>⚡ AI Store</h2>
-    <button class="menu-toggle" id="menu-toggle">☰</button>
-    <div class="nav-links" id="nav-links">
-      <a href="index.html">Home</a>
-      <a href="ai-advisor.html" style="color: var(--primary);">✨ AI Advisor</a>
-      <a href="admin.html" id="admin-panel-link" style="display: none; color: var(--danger);">⚙️ Admin</a>
-      <a href="auth.html" id="nav-auth-btn" class="btn btn-primary">Login</a>
+    <div class="nav-container">
+      <a href="index.html" class="brand-logo">
+        FlipStore <span>Plus</span>
+      </a>
+
+      <div class="search-bar">
+        <input type="text" id="search-input" placeholder="Search for products, AI prompts, tools and more..."/>
+        <button>🔍</button>
+      </div>
+
+      <button class="menu-toggle" id="menu-toggle">☰</button>
+
+      <div class="nav-actions" id="nav-actions">
+        <a href="ai-advisor.html" style="color: #ffe500;">✨ AI Assistant</a>
+        <a href="admin.html" id="admin-panel-link" style="display: none; color: #ff8080;">⚙️ Admin</a>
+        <a href="auth.html" id="nav-auth-btn" style="background: #fff; color: var(--primary); padding: 6px 20px; border-radius: 2px;">Login</a>
+      </div>
     </div>
   </nav>
 
-  <div class="container">
-    <div style="margin-bottom: 30px;">
-      <h1 style="font-size: 1.8rem; font-weight: 700;">Marketplace Assets</h1>
-      <p style="color: var(--text-muted); font-size: 0.9rem;">Find best AI tools and digital products.</p>
-    </div>
+  <!-- Category Bar -->
+  <div class="category-bar">
+    <div class="cat-item active">All Products</div>
+    <div class="cat-item">Top Deals</div>
+    <div class="cat-item">AI Assets</div>
+    <div class="cat-item">Prompts</div>
+    <div class="cat-item">Software</div>
+    <div class="cat-item">Templates</div>
+  </div>
 
-    <div id="product-grid" class="grid">
-      <p style="color: var(--text-muted);">Loading products...</p>
+  <!-- Promotional Banner -->
+  <div class="hero-banner">
+    <div class="banner-box">
+      <div>
+        <span style="background: rgba(255,255,255,0.2); font-size: 0.75rem; padding: 4px 8px; border-radius: 3px;">BIG SAVINGS SALE</span>
+        <h2 style="font-size: 1.6rem; margin: 8px 0;">Top Digital AI Assets &amp; Prompts</h2>
+        <p style="font-size: 0.85rem; opacity: 0.9;">Up to 70% OFF on premium tools this week</p>
+      </div>
+      <a href="ai-advisor.html" style="background: #fff; color: #000; padding: 10px 18px; border-radius: 4px; text-decoration: none; font-weight: 700; font-size: 0.85rem;">Ask AI Advisor</a>
+    </div>
+  </div>
+
+  <!-- Main Product Section -->
+  <div class="main-container">
+    <div class="section-card">
+      <div class="section-header">
+        <h2 class="section-title">Trending Deals</h2>
+      </div>
+
+      <div id="product-grid" class="grid">
+        <p style="color: var(--text-muted);">Fetching best deals for you...</p>
+      </div>
     </div>
   </div>
 
@@ -35,9 +70,9 @@
     import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     // Mobile Navbar Toggle
-    const menuToggle = document.getElementById('menu-toggle');
-    const navLinks = document.getElementById('nav-links');
-    menuToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    document.getElementById('menu-toggle').addEventListener('click', () => {
+      document.getElementById('nav-actions').classList.toggle('active');
+    });
 
     const adminPanelLink = document.getElementById('admin-panel-link');
     const navAuthBtn = document.getElementById('nav-auth-btn');
@@ -54,6 +89,7 @@
       }
     });
 
+    // Fetch & Display Products in Flipkart / Amazon Style
     async function loadProducts() {
       const grid = document.getElementById('product-grid');
       try {
@@ -61,25 +97,32 @@
         grid.innerHTML = '';
 
         if (querySnapshot.empty) {
-          grid.innerHTML = '<p style="color: var(--text-muted);">No products found.</p>';
+          grid.innerHTML = '<p style="color: var(--text-muted);">No products currently available.</p>';
           return;
         }
 
         querySnapshot.forEach((docSnap) => {
           const product = docSnap.data();
+          
+          // Dummy calculation for e-commerce MRP crossed out price
+          const dummyOriginalPrice = (product.price * 1.35).toFixed(0);
+
           grid.innerHTML += `
-            <div class="card">
-              <img src="${product.imageUrl || 'https://via.placeholder.com/300'}" alt="${product.title}"/>
-              <div class="card-content">
-                <div class="card-title">${product.title}</div>
-                <div class="card-price">$${product.price}</div>
-                <a href="product.html?id=${docSnap.id}" class="btn btn-primary" style="width:100%;">View Details</a>
+            <div class="product-card">
+              <span class="badge-discount">25% OFF</span>
+              <img class="product-img" src="${product.imageUrl || 'https://via.placeholder.com/200'}" alt="${product.title}"/>
+              <div class="product-title">${product.title}</div>
+              <div class="rating-tag">★ 4.5</div>
+              <div class="price-row">
+                <span class="current-price">$${product.price}</span>
+                <span class="original-price">$${dummyOriginalPrice}</span>
               </div>
+              <a href="product.html?id=${docSnap.id}" class="btn-buy">View Details</a>
             </div>
           `;
         });
       } catch (error) {
-        grid.innerHTML = '<p style="color: var(--danger);">Error loading products.</p>';
+        grid.innerHTML = '<p style="color: red;">Failed to load items.</p>';
       }
     }
 
