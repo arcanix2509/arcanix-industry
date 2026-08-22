@@ -50,7 +50,7 @@
 
     const productList = document.getElementById('admin-product-list');
 
-    // Auth Guard with delayed execution fix
+    // Auth Guard
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
         alert("Access Denied! Please login first.");
@@ -64,7 +64,6 @@
         return;
       }
 
-      // If Admin is verified, load products
       loadAdminProducts();
     });
 
@@ -80,19 +79,18 @@
           return;
         }
 
-        querySnapshot.forEach((document) => {
-          const product = document.data();
-          const tr = document.createElement('tr');
+        querySnapshot.forEach((docSnap) => {
+          const product = docSnap.data();
+          const tr = window.document.createElement('tr');
           tr.innerHTML = `
             <td><img src="${product.imageUrl || 'https://via.placeholder.com/50'}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;"/></td>
             <td><strong>${product.title}</strong></td>
             <td>$${product.price}</td>
-            <td><button class="btn-delete" data-id="${document.id}">Delete</button></td>
+            <td><button class="btn-delete" data-id="${docSnap.id}">Delete</button></td>
           `;
           productList.appendChild(tr);
         });
 
-        // Event listener for delete buttons
         document.querySelectorAll('.btn-delete').forEach(btn => {
           btn.addEventListener('click', async (e) => {
             const id = e.target.getAttribute('data-id');
