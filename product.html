@@ -2,35 +2,44 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <title>Product Details</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Asset Details</title>
   <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
 
   <nav>
-    <h2>AI Marketplace</h2>
-    <div>
-      <a href="index.html">Back to Home</a>
+    <div class="nav-container">
+      <a href="index.html" class="brand-logo">Arcanix <span>PRO</span></a>
+      <a href="index.html" class="nav-link">← Back to Store</a>
     </div>
   </nav>
 
   <div class="container">
-    <div class="product-detail-container">
+    <div style="display: grid; grid-template-columns: 1fr 400px; gap: 24px;">
       
-      <!-- Left: Product Info -->
-      <div id="product-info">
-        <p>Loading details...</p>
+      <!-- Product Details Column -->
+      <div id="product-info" class="card" style="padding: 24px;">
+        <p style="color: var(--text-muted);">Loading asset details...</p>
       </div>
 
-      <!-- Right: Gemini AI Assistant -->
-      <div class="chat-box">
-        <div class="chat-header">✨ Gemini AI Sales Assistant</div>
-        <div class="chat-messages" id="chat-messages">
-          <div class="message bot-msg">Hello! Ask me anything about this product or request a deal!</div>
+      <!-- AI Assistant Column -->
+      <div class="chat-container">
+        <div class="chat-header">
+          <div style="width: 32px; height: 32px; background: var(--primary-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary); font-weight: bold;">✨</div>
+          <div>
+            <h4 style="font-size: 0.9rem; font-weight: 700;">Asset Sales Assistant</h4>
+            <p style="font-size: 0.75rem; color: var(--text-muted);">Ask technical questions or check eligibility for discounts.</p>
+          </div>
         </div>
-        <form class="chat-input-form" id="chat-form">
-          <input type="text" id="chat-input" placeholder="Ask a question..." required/>
-          <button type="submit" class="btn" style="width: auto; margin:0;">Send</button>
+
+        <div class="chat-messages" id="chat-messages">
+          <div class="message ai">Hi! Ask me anything about this asset!</div>
+        </div>
+
+        <form class="chat-input-area" id="chat-form">
+          <input type="text" id="chat-input" placeholder="Type your message..." required autocomplete="off"/>
+          <button type="submit" class="btn btn-primary" style="width: auto;">Send</button>
         </form>
       </div>
 
@@ -52,7 +61,7 @@
 
     async function loadProductDetails() {
       if (!productId) {
-        productInfoContainer.innerHTML = "<p>Product not found.</p>";
+        productInfoContainer.innerHTML = "<p>Asset not found.</p>";
         return;
       }
 
@@ -62,10 +71,10 @@
       if (docSnap.exists()) {
         currentProduct = docSnap.data();
         productInfoContainer.innerHTML = `
-          <img src="${currentProduct.imageUrl}" alt="${currentProduct.title}"/>
-          <h1 style="margin-top: 15px;">${currentProduct.title}</h1>
-          <div class="card-price" style="margin: 10px 0;">$${currentProduct.price}</div>
-          <p style="color: #475569; line-height: 1.6;">${currentProduct.description}</p>
+          <img src="${currentProduct.imageUrl}" alt="${currentProduct.title}" style="width:100%; max-height:360px; object-fit:cover; border-radius: var(--radius-md); margin-bottom: 20px;"/>
+          <h1 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 8px;">${currentProduct.title}</h1>
+          <div style="font-size: 1.5rem; font-weight: 800; color: var(--primary); margin-bottom: 16px;">$${currentProduct.price}</div>
+          <p style="color: var(--text-muted); font-size: 0.925rem; white-space: pre-line;">${currentProduct.description}</p>
         `;
       } else {
         productInfoContainer.innerHTML = "<p>Product does not exist!</p>";
@@ -77,55 +86,42 @@
       const userText = chatInput.value.trim();
       if (!userText || !currentProduct) return;
 
-      appendMessage(userText, 'user-msg');
+      appendMessage(userText, 'user');
       chatInput.value = '';
 
-      const thinkingDiv = appendMessage('Gemini is thinking...', 'bot-msg');
+      const thinkingDiv = appendMessage('Analyzing request...', 'ai');
 
       try {
         const promptText = `
-          You are a polite AI Sales Representative for this product:
+          You are an AI Sales Agent for this product:
           - Title: ${currentProduct.title}
           - Price: $${currentProduct.price}
           - Details: ${currentProduct.description}
 
-          Rules:
-          1. Answer questions based only on this product.
-          2. Maximum discount limit is 10%. Refuse requests higher than 10%.
-          3. Keep answers concise and persuasive.
-
-          User question: ${userText}
+          Rules: Answer product questions directly. Limit discounts to maximum 10%.
+          User Query: ${userText}
         `;
 
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            contents: [{
-              parts: [{ text: promptText }]
-            }]
-          })
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
         });
 
         const data = await response.json();
-
         if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
           thinkingDiv.innerText = data.candidates[0].content.parts[0].text;
         } else {
-          thinkingDiv.innerText = "Error: " + (data.error?.message || "Could not fetch response from Gemini API.");
+          thinkingDiv.innerText = "Could not process request.";
         }
-
       } catch (err) {
-        console.error("Gemini Error:", err);
         thinkingDiv.innerText = "Connection failed.";
       }
     });
 
-    function appendMessage(text, className) {
+    function appendMessage(text, type) {
       const msgDiv = document.createElement('div');
-      msgDiv.className = `message ${className}`;
+      msgDiv.className = `message ${type}`;
       msgDiv.innerText = text;
       chatMessages.appendChild(msgDiv);
       chatMessages.scrollTop = chatMessages.scrollHeight;
