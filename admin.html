@@ -3,61 +3,38 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Admin Panel</title>
+  <title>Admin Dashboard</title>
   <link rel="stylesheet" href="style.css"/>
-  <style>
-    .admin-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-      background: var(--bg-card);
-      border-radius: 12px;
-      overflow: hidden;
-      border: 1px solid var(--border-color);
-    }
-    .admin-table th, .admin-table td {
-      padding: 16px;
-      text-align: left;
-      border-bottom: 1px solid var(--border-color);
-    }
-    .admin-table th { background: rgba(15, 23, 42, 0.9); color: var(--text-muted); font-size: 0.85rem; }
-    .btn-delete {
-      background: rgba(244, 63, 94, 0.2);
-      color: #fda4af;
-      border: 1px solid rgba(244, 63, 94, 0.4);
-      padding: 6px 14px;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    .btn-delete:hover { background: rgba(244, 63, 94, 0.4); }
-  </style>
 </head>
 <body>
 
   <nav>
-    <h2>⚙️ Admin Control Center</h2>
-    <div>
-      <a href="index.html">View Storefront</a>
+    <div class="nav-container">
+      <a href="index.html" class="brand-logo">Arcanix <span>ADMIN</span></a>
+      <a href="index.html" class="nav-link">Storefront View</a>
     </div>
   </nav>
 
   <div class="container">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-      <h2>Inventory Management</h2>
-      <a href="add-product.html" class="btn" style="width: auto; background: #10b981; color: white; padding: 10px 20px;">+ Add Product</a>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+      <div>
+        <h2 style="font-size: 1.25rem; font-weight: 800;">Asset Inventory</h2>
+        <p style="font-size: 0.825rem; color: var(--text-muted);">Manage published assets and catalog items.</p>
+      </div>
+      <a href="add-product.html" class="btn btn-primary">+ Add New Asset</a>
     </div>
 
     <table class="admin-table">
       <thead>
         <tr>
-          <th>Preview</th>
-          <th>Product Name</th>
+          <th>Asset</th>
+          <th>Title</th>
           <th>Price</th>
-          <th>Actions</th>
+          <th>Action</th>
         </tr>
       </thead>
       <tbody id="admin-product-list">
-        <tr><td colspan="4" style="color: var(--text-muted);">Validating permissions...</td></tr>
+        <tr><td colspan="4" style="color: var(--text-muted);">Verifying admin credentials...</td></tr>
       </tbody>
     </table>
   </div>
@@ -83,26 +60,26 @@
         productList.innerHTML = '';
 
         if (querySnapshot.empty) {
-          productList.innerHTML = '<tr><td colspan="4" style="color: var(--text-muted);">No products found in database.</td></tr>';
+          productList.innerHTML = '<tr><td colspan="4" style="color: var(--text-muted);">No products found in inventory.</td></tr>';
           return;
         }
 
         querySnapshot.forEach((docSnap) => {
           const product = docSnap.data();
-          const tr = window.document.createElement('tr');
+          const tr = document.createElement('tr');
           tr.innerHTML = `
-            <td><img src="${product.imageUrl || 'https://via.placeholder.com/50'}" style="width: 48px; height: 48px; object-fit: cover; border-radius: 8px;"/></td>
+            <td><img src="${product.imageUrl || 'https://via.placeholder.com/50'}" style="width: 42px; height: 42px; object-fit: cover; border-radius: var(--radius-sm);"/></td>
             <td><strong>${product.title}</strong></td>
-            <td style="color: #60a5fa; font-weight:600;">$${product.price}</td>
-            <td><button class="btn-delete" data-id="${docSnap.id}">Delete</button></td>
+            <td><strong>$${product.price}</strong></td>
+            <td><button class="btn btn-danger btn-delete" data-id="${docSnap.id}">Delete</button></td>
           `;
           productList.appendChild(tr);
         });
 
-        window.document.querySelectorAll('.btn-delete').forEach(btn => {
+        document.querySelectorAll('.btn-delete').forEach(btn => {
           btn.addEventListener('click', async (e) => {
             const id = e.target.getAttribute('data-id');
-            if (confirm("Delete this product permanently?")) {
+            if (confirm("Permanently delete this asset?")) {
               await deleteDoc(doc(db, "products", id));
               loadAdminProducts();
             }
@@ -110,7 +87,7 @@
         });
 
       } catch (err) {
-        productList.innerHTML = `<tr><td colspan="4" style="color:#f43f5e;">Error: ${err.message}</td></tr>`;
+        productList.innerHTML = `<tr><td colspan="4" style="color:var(--danger);">Error: ${err.message}</td></tr>`;
       }
     }
   </script>
