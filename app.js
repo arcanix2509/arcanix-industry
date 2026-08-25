@@ -458,7 +458,8 @@ async function fetchBanners() {
     }
     
     const banners = snap.docs.map(doc => doc.data());
-    const fallbackImage = 'https://picsum.photos/1200/400';
+    // Reliable Fallback SVG Placeholder Image
+    const fallbackImage = 'https://placehold.co/1200x400/2874f0/ffffff?text=Arcanix+Special+Offer';
     
     container.style.display = 'block';
     
@@ -582,11 +583,14 @@ async function renderProductDetailPage(params) {
     const snap = await getDoc(doc(db, "products", id));
     if (!snap.exists()) return;
     const p = snap.data();
+    const fallbackProductImg = 'https://placehold.co/400x400/e0e0e0/000000?text=No+Image';
 
     appContainer.innerHTML = `
       <div style="background: #fff; border-radius:4px; padding: 20px; display: flex; flex-wrap: wrap; gap: 32px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
         <div style="flex: 1 1 320px; text-align: center;">
-          <img src="${p.imageUrl || 'https://via.placeholder.com/400'}" style="width: 100%; max-height: 380px; object-fit: contain; margin-bottom: 20px;"/>
+          <img src="${p.imageUrl || fallbackProductImg}" 
+               onerror="this.onerror=null; this.src='${fallbackProductImg}';" 
+               style="width: 100%; max-height: 380px; object-fit: contain; margin-bottom: 20px;"/>
           <div style="display: flex; gap: 12px;">
             <button onclick="addToCart('${id}', '${p.title}', ${p.price}, '${p.imageUrl}')" style="flex: 1; padding: 14px 8px; font-size: 0.95rem; font-weight:700; background:#ff9f00; color:#fff; border:none; border-radius:2px; cursor:pointer;">ADD TO CART</button>
             <button onclick="addToCart('${id}', '${p.title}', ${p.price}, '${p.imageUrl}'); location.hash='checkout';" style="flex: 1; padding: 14px 8px; font-size: 0.95rem; font-weight:700; background:#fb641b; color:#fff; border:none; border-radius:2px; cursor:pointer;">BUY NOW</button>
@@ -983,6 +987,8 @@ async function fetchProductsGrid(container, searchQuery = '', categoryFilter = '
     }
 
     let matchFound = false;
+    const fallbackProductImg = 'https://placehold.co/200x200/e0e0e0/000000?text=No+Image';
+
     snap.forEach((docSnap) => {
       const p = docSnap.data();
       
@@ -992,7 +998,9 @@ async function fetchProductsGrid(container, searchQuery = '', categoryFilter = '
       matchFound = true;
       container.innerHTML += `
         <div class="product-card" onclick="location.hash='pdp?id=${docSnap.id}'">
-          <img src="${p.imageUrl || 'https://via.placeholder.com/200'}" class="product-card-img"/>
+          <img src="${p.imageUrl || fallbackProductImg}" 
+               onerror="this.onerror=null; this.src='${fallbackProductImg}';" 
+               class="product-card-img"/>
           <div>
             <div class="product-card-title">${p.title}</div>
             <div class="rating-badge">4.5 ★</div>
