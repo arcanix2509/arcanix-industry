@@ -24,15 +24,14 @@ const routes = {
 
 const appContainer = document.getElementById('app-view');
 
-// Dynamic Mobile CSS Injection
+// 1. Dynamic Mobile & Hamburger Styles Injection
 function injectMobileStyles() {
   if (document.getElementById('mobile-custom-styles')) return;
   const style = document.createElement('style');
   style.id = 'mobile-custom-styles';
   style.innerHTML = `
-    /* Mobile-first base layout adjustments */
     body {
-      padding-bottom: 70px !important; /* Space for Mobile Bottom Nav */
+      padding-bottom: 0 !important;
     }
     .grid {
       display: grid !important;
@@ -46,7 +45,7 @@ function injectMobileStyles() {
       }
     }
     
-    /* Horizontal Scrollable Mobile Categories Strip */
+    /* Dynamic Scrollable Mobile Categories Strip */
     .cat-strip-container {
       display: flex !important;
       overflow-x: auto !important;
@@ -73,7 +72,7 @@ function injectMobileStyles() {
       margin-bottom: 4px !important;
     }
 
-    /* Product Cards Mobile Optimization */
+    /* Card Optimization */
     .card {
       border: 1px solid #eee !important;
       border-radius: 8px !important;
@@ -87,98 +86,120 @@ function injectMobileStyles() {
       border-radius: 4px !important;
     }
 
-    /* PDP Grid Mobile Responsive Stack */
-    .pdp-container {
-      display: flex !important;
-      flex-direction: column !important;
-      gap: 16px !important;
+    /* Hamburger Side Drawer Styles */
+    .hamburger-btn {
+      font-size: 1.5rem;
+      cursor: pointer;
+      background: none;
+      border: none;
+      color: inherit;
+      padding: 4px 8px;
     }
-    @media (min-width: 768px) {
-      .pdp-container {
-        display: grid !important;
-        grid-template-columns: 360px 1fr !important;
-        gap: 32px !important;
-      }
-    }
-
-    /* Cart / Checkout Mobile Responsiveness */
-    .cart-layout {
-      display: flex !important;
-      flex-direction: column !important;
-      gap: 16px !important;
-    }
-    @media (min-width: 768px) {
-      .cart-layout {
-        display: grid !important;
-        grid-template-columns: 1fr 340px !important;
-      }
-    }
-
-    /* Admin Dashboard Responsive Grid */
-    .admin-grid {
-      display: flex !important;
-      flex-direction: column !important;
-      gap: 16px !important;
-    }
-    @media (min-width: 768px) {
-      .admin-grid {
-        display: grid !important;
-        grid-template-columns: 1fr 1fr !important;
-      }
-    }
-
-    /* Fixed Bottom Navigation Bar for Mobile */
-    .mobile-bottom-nav {
+    .side-drawer {
       position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 60px;
+      top: 0;
+      left: -270px;
+      width: 260px;
+      height: 100%;
       background: #ffffff;
-      border-top: 1px solid #e0e0e0;
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      z-index: 9999;
-      box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
-    }
-    @media (min-width: 768px) {
-      .mobile-bottom-nav {
-        display: none;
-      }
-    }
-    .mobile-nav-item {
+      box-shadow: 2px 0 10px rgba(0,0,0,0.2);
+      z-index: 10000;
+      transition: left 0.3s ease;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      color: #666;
-      text-decoration: none;
-      font-size: 0.7rem;
     }
-    .mobile-nav-item.active {
-      color: #2874f0;
+    .side-drawer.open {
+      left: 0;
+    }
+    .drawer-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.4);
+      z-index: 9999;
+      display: none;
+    }
+    .drawer-overlay.active {
+      display: block;
+    }
+    .drawer-header {
+      background: #2874f0;
+      color: #fff;
+      padding: 16px;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .drawer-links {
+      display: flex;
+      flex-direction: column;
+      padding: 12px 0;
+    }
+    .drawer-links a {
+      padding: 12px 20px;
+      color: #333;
+      text-decoration: none;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid #f0f0f0;
     }
   `;
   document.head.appendChild(style);
 }
 
-function renderBottomNav() {
-  if (document.getElementById('mobile-bottom-nav')) return;
-  const nav = document.createElement('div');
-  nav.id = 'mobile-bottom-nav';
-  nav.className = 'mobile-bottom-nav';
-  nav.innerHTML = `
-    <a href="#home" class="mobile-nav-item"><span>🏠</span><span>Home</span></a>
-    <a href="#search" class="mobile-nav-item"><span>🔍</span><span>Search</span></a>
-    <a href="#cart" class="mobile-nav-item"><span>🛒</span><span>Cart</span></a>
-    <a href="#account" class="mobile-nav-item"><span>👤</span><span>Account</span></a>
+// 2. Hamburger Drawer Setup
+function setupHamburgerMenu() {
+  const oldBottomNav = document.getElementById('mobile-bottom-nav');
+  if (oldBottomNav) oldBottomNav.remove();
+
+  if (document.getElementById('hamburger-drawer')) return;
+
+  const drawer = document.createElement('div');
+  drawer.id = 'hamburger-drawer';
+  drawer.className = 'side-drawer';
+  drawer.innerHTML = `
+    <div class="drawer-header">
+      <span>Menu</span>
+      <span style="cursor:pointer;" onclick="toggleDrawer(false)">✕</span>
+    </div>
+    <div class="drawer-links">
+      <a href="#home" onclick="toggleDrawer(false)"><span>🏠</span> Home</a>
+      <a href="#search" onclick="toggleDrawer(false)"><span>🔍</span> Search</a>
+      <a href="#cart" onclick="toggleDrawer(false)"><span>🛒</span> My Cart</a>
+      <a href="#account" onclick="toggleDrawer(false)"><span>👤</span> Account / Profile</a>
+    </div>
   `;
-  document.body.appendChild(nav);
+
+  const overlay = document.createElement('div');
+  overlay.id = 'drawer-overlay';
+  overlay.className = 'drawer-overlay';
+  overlay.onclick = () => toggleDrawer(false);
+
+  document.body.appendChild(drawer);
+  document.body.appendChild(overlay);
 }
+
+window.toggleDrawer = function(open) {
+  const drawer = document.getElementById('hamburger-drawer');
+  const overlay = document.getElementById('drawer-overlay');
+  if (!drawer || !overlay) return;
+  if (open) {
+    drawer.classList.add('open');
+    overlay.classList.add('active');
+  } else {
+    drawer.classList.remove('open');
+    overlay.classList.remove('active');
+  }
+};
 
 function navigate() {
   injectMobileStyles();
-  renderBottomNav();
+  setupHamburgerMenu();
 
   const fullHash = window.location.hash.replace('#', '') || 'home';
   const [route, queryString] = fullHash.split('?');
@@ -212,7 +233,7 @@ function updateCartBadge() {
   if (badge) badge.innerText = window.cart.length;
 }
 
-// Global Category Strip Loader (Firebase Firestore Connected & Mobile Scrollable)
+// Global Category Strip Loader
 async function loadDynamicCategoriesStrip() {
   const strip = document.getElementById('dynamic-cat-strip');
   if (!strip) return;
@@ -282,19 +303,26 @@ async function renderHomePage() {
 
 async function fetchBanners() {
   const container = document.getElementById('home-slider-container');
+  if (!container) return;
   try {
     const snap = await getDocs(collection(db, "banners"));
-    if (snap.empty) return;
+    if (snap.empty) {
+      container.style.display = 'none';
+      return;
+    }
     const b = snap.docs[0].data();
+    container.style.display = 'block';
     container.innerHTML = `
-      <div style="background: linear-gradient(90deg, #1e3c72, #2a5298); color: white; padding: 24px 16px; border-radius: 8px; text-align: center; background-image: url('${b.imageUrl}'); background-size: cover; background-position: center;">
-        <div style="background: rgba(0,0,0,0.5); padding: 12px; border-radius: 6px; display: inline-block; width: 100%;">
-          <h1 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 4px;">${b.title}</h1>
-          <p style="font-size: 0.85rem;">${b.subtitle || ''}</p>
+      <div style="background: linear-gradient(90deg, #1e3c72, #2a5298); color: white; padding: 24px 16px; border-radius: 8px; text-align: center; background-image: url('${b.imageUrl}'); background-size: cover; background-position: center; min-height: 120px; display: flex; align-items: center; justify-content: center;">
+        <div style="background: rgba(0,0,0,0.55); padding: 12px 20px; border-radius: 6px; width: 100%;">
+          <h1 style="font-size: 1.3rem; font-weight: 800; margin-bottom: 4px; color: #fff;">${b.title || 'Welcome'}</h1>
+          <p style="font-size: 0.85rem; color: #eee; margin: 0;">${b.subtitle || ''}</p>
         </div>
       </div>
     `;
-  } catch(e) {}
+  } catch(e) {
+    console.error("Banner fetch error:", e);
+  }
 }
 
 // 2. CATEGORY PRODUCTS PAGE (PLP)
@@ -320,7 +348,7 @@ async function renderProductDetailPage(params) {
     const p = snap.data();
 
     appContainer.innerHTML = `
-      <div class="section-card pdp-container" style="padding: 16px;">
+      <div class="section-card" style="padding: 16px;">
         <div>
           <img src="${p.imageUrl || 'https://via.placeholder.com/400'}" style="width: 100%; border: 1px solid var(--border); border-radius: 8px; max-height: 300px; object-fit: cover; margin-bottom: 16px;"/>
           <div style="display: flex; gap: 8px;">
@@ -328,13 +356,13 @@ async function renderProductDetailPage(params) {
             <button onclick="addToCart('${id}', '${p.title}', ${p.price}, '${p.imageUrl}'); location.hash='checkout';" class="btn btn-fk-orange" style="flex: 1; padding: 12px 8px; font-size: 0.9rem;">BUY NOW</button>
           </div>
         </div>
-        <div>
+        <div style="margin-top: 16px;">
           <h1 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 6px;">${p.title}</h1>
           <div style="font-size:0.8rem; color:var(--fk-blue); font-weight:600; margin-bottom:8px;">Category: ${p.category || 'General'}</div>
           <div class="badge-rating" style="margin-bottom: 10px;">4.5 ★</div>
           <div style="margin-bottom: 12px;">
             <span class="price-main" style="font-size: 1.3rem;">$${p.price}</span>
-            ${p.tag ? `<span class="discount-tag">${p.tag}</span>` : ''}
+            ${p.tag ? `<span class="discount-tag" style="font-size: 0.75rem;">${p.tag}</span>` : ''}
           </div>
           <h4 style="margin-bottom: 6px; font-size: 0.95rem;">Description:</h4>
           <p style="color: #555; font-size: 0.85rem; line-height: 1.5; white-space: pre-line;">${p.description || 'No description provided.'}</p>
@@ -367,7 +395,7 @@ function renderCartPage() {
   let total = window.cart.reduce((sum, item) => sum + item.price, 0);
 
   appContainer.innerHTML = `
-    <div class="cart-layout">
+    <div style="display: flex; flex-direction: column; gap: 16px;">
       <div class="section-card" style="padding: 12px;">
         <h3 style="margin-bottom: 12px; font-size: 1.1rem;">My Cart (${window.cart.length})</h3>
         ${window.cart.map((item, idx) => `
@@ -432,12 +460,14 @@ function renderOrderConfirmationPage() {
   `;
 }
 
-// 8. AUTHENTICATION
+// 8. AUTHENTICATION (Google Login Refresh Fix Included)
 function renderAuthPage() {
   appContainer.innerHTML = `
     <div class="form-card" style="padding: 16px;">
       <h2 style="text-align: center; margin-bottom: 16px; font-size: 1.2rem;">Account Login</h2>
-      <button id="google-login-btn" class="btn btn-outline" style="width: 100%; margin-bottom: 16px; padding: 10px;">Continue with Google</button>
+      <button type="button" id="google-login-btn" class="btn btn-outline" style="width: 100%; margin-bottom: 16px; padding: 10px; display:flex; align-items:center; justify-content:center; gap:8px;">
+        <span>🌐</span> Continue with Google
+      </button>
       <form id="email-form">
         <div class="form-group"><label>Email Address</label><input type="email" id="a-email" required style="width:100%; padding:8px;"/></div>
         <div class="form-group"><label>Password</label><input type="password" id="a-pass" required style="width:100%; padding:8px;"/></div>
@@ -445,12 +475,25 @@ function renderAuthPage() {
       </form>
     </div>
   `;
-  document.getElementById('google-login-btn').onclick = () => signInWithPopup(auth, googleProvider).then(() => location.hash = 'account');
-  document.getElementById('email-form').onsubmit = (e) => {
+
+  document.getElementById('google-login-btn').onclick = async (e) => {
     e.preventDefault();
-    signInWithEmailAndPassword(auth, document.getElementById('a-email').value, document.getElementById('a-pass').value)
-      .then(() => location.hash = 'account')
-      .catch(err => alert(err.message));
+    try {
+      await signInWithPopup(auth, googleProvider);
+      window.location.hash = '#account';
+    } catch(err) {
+      alert("Google Login Error: " + err.message);
+    }
+  };
+
+  document.getElementById('email-form').onsubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await signInWithEmailAndPassword(auth, document.getElementById('a-email').value, document.getElementById('a-pass').value);
+      window.location.hash = '#account';
+    } catch(err) {
+      alert("Login Error: " + err.message);
+    }
   };
 }
 
@@ -472,10 +515,10 @@ function renderUserDashboardPage() {
   document.getElementById('so-btn').onclick = () => signOut(auth).then(() => location.hash = 'auth');
 }
 
-// 10. FULLY CONNECTED & MOBILE-OPTIMIZED ADMIN DASHBOARD (CMS)
+// 10. ADMIN DASHBOARD (CMS)
 async function renderSellerDashboardPage() {
   if (!currentUser || (currentUser.email && currentUser.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase())) {
-    appContainer.innerHTML = `<div class="section-card"><h2>Access Denied</h2><p>Only admin can access this page.</p></div>`;
+    appContainer.innerHTML = `<div class="section-card"><h2>Access Denied</h2><p>Only authorized admin can access this page.</p></div>`;
     return;
   }
 
@@ -484,14 +527,14 @@ async function renderSellerDashboardPage() {
       <h2 style="font-size: 1.2rem; margin-bottom: 4px;">⚙️ Admin CMS</h2>
       <p style="color: var(--text-muted); margin-bottom: 16px; font-size: 0.8rem;">Manage Sliders, Categories & Products live on Firebase.</p>
 
-      <div class="admin-grid" style="margin-bottom: 24px;">
+      <div style="display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px;">
         
         <!-- SECTION A: Add Slider / Banner -->
         <form id="admin-banner-form" style="background: #fafafa; padding: 12px; border: 1px solid var(--border); border-radius: 6px;">
           <h4 style="margin-bottom: 8px;">1. Add Main Banner</h4>
           <div class="form-group"><label>Banner Title</label><input type="text" id="b-title" required placeholder="MEGA SALE" style="width:100%; padding:6px;"/></div>
           <div class="form-group"><label>Subtitle</label><input type="text" id="b-subtitle" placeholder="50% OFF" style="width:100%; padding:6px;"/></div>
-          <div class="form-group"><label>Image URL</label><input type="url" id="b-image" placeholder="https://..." style="width:100%; padding:6px;"/></div>
+          <div class="form-group"><label>Image URL</label><input type="url" id="b-image" required placeholder="https://..." style="width:100%; padding:6px;"/></div>
           <button type="submit" class="btn btn-fk-orange" style="width:100%;">Save Banner</button>
         </form>
 
@@ -528,7 +571,7 @@ async function renderSellerDashboardPage() {
     </div>
   `;
 
-  // Fetch & Populate Categories Dropdown
+  // Fetch Categories
   async function populateCategoryDropdown() {
     const catSelect = document.getElementById('p-category');
     if (!catSelect) return;
@@ -551,7 +594,7 @@ async function renderSellerDashboardPage() {
 
   await populateCategoryDropdown();
 
-  // Handle Category Add Form Submission (Firebase Connected)
+  // Category Submit
   document.getElementById('admin-cat-form').onsubmit = async (e) => {
     e.preventDefault();
     const submitBtn = document.getElementById('c-submit-btn');
@@ -583,7 +626,7 @@ async function renderSellerDashboardPage() {
     }
   };
 
-  // Handle Banner Submit
+  // Banner Submit
   document.getElementById('admin-banner-form').onsubmit = async (e) => {
     e.preventDefault();
     try {
@@ -595,12 +638,13 @@ async function renderSellerDashboardPage() {
       });
       alert("Banner saved!");
       document.getElementById('admin-banner-form').reset();
+      fetchBanners();
     } catch(err) {
       alert("Error adding banner: " + err.message);
     }
   };
 
-  // Handle Product Submit
+  // Product Submit
   document.getElementById('seller-add-form').onsubmit = async (e) => {
     e.preventDefault();
     try {
@@ -653,7 +697,7 @@ async function renderSellerDashboardPage() {
   }
 }
 
-// Fetcher Function for Store Products Grid
+// Fetch Products Grid
 async function fetchProductsGrid(container, searchQuery = '', categoryFilter = '') {
   try {
     const snap = await getDocs(collection(db, "products"));
