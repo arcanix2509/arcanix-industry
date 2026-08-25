@@ -24,32 +24,44 @@ const routes = {
 
 const appContainer = document.getElementById('app-view');
 
-// 1. Mobile Custom Styles Injection (Clean Top Navigation & Mobile Polish)
-function injectMobileStyles() {
-  if (document.getElementById('mobile-custom-styles')) return;
+// 1. Professional E-Commerce CSS (Flipkart / Amazon Theme)
+function injectResponsiveStyles() {
+  if (document.getElementById('responsive-custom-styles')) return;
   const style = document.createElement('style');
-  style.id = 'mobile-custom-styles';
+  style.id = 'responsive-custom-styles';
   style.innerHTML = `
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { padding-bottom: 0 !important; background-color: #f1f2f6; }
-    
-    /* Sleek Mobile Header */
-    .mobile-header {
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: Inter, -apple-system, Roboto, Helvetica, Arial, sans-serif; }
+    body { background-color: #f1f3f6; color: #212121; }
+
+    /* Main Container */
+    .main-container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 12px;
+    }
+
+    /* Flipkart Blue Top Nav */
+    .app-header {
       position: sticky;
       top: 0;
       z-index: 1000;
       background: #2874f0;
       color: #ffffff;
-      padding: 10px 14px;
+      box-shadow: 0 2px 4px 0 rgba(0,0,0,.08);
+    }
+    .header-top {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 10px 16px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      gap: 16px;
     }
     .header-left {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 14px;
     }
     .hamburger-btn {
       font-size: 1.4rem;
@@ -59,116 +71,202 @@ function injectMobileStyles() {
       color: #fff;
       display: flex;
       align-items: center;
-      justify-content: center;
-      line-height: 1;
     }
     .brand-logo {
-      font-size: 1.15rem;
+      font-size: 1.3rem;
       font-weight: 800;
       color: #fff;
       text-decoration: none;
-      letter-spacing: 0.5px;
+      font-style: italic;
+      letter-spacing: -0.5px;
     }
+    .brand-logo span { color: #ffe500; font-style: normal; }
+
+    /* Integrated Desktop & Mobile Search Bar */
+    .header-search-box {
+      flex: 1;
+      max-width: 600px;
+      position: relative;
+    }
+    .header-search-box input {
+      width: 100%;
+      padding: 9px 42px 9px 16px;
+      border: none;
+      border-radius: 2px;
+      outline: none;
+      font-size: 0.9rem;
+      box-shadow: 0 1px 2px 0 rgba(0,0,0,.2);
+    }
+    .header-search-box button {
+      position: absolute;
+      right: 6px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1.1rem;
+      padding: 4px 8px;
+    }
+
     .header-right {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 24px;
     }
-    .header-icon-btn {
+    .header-link {
       color: #fff;
       text-decoration: none;
-      font-size: 1.2rem;
-      position: relative;
+      font-size: 0.95rem;
+      font-weight: 600;
       display: flex;
       align-items: center;
+      gap: 6px;
     }
     .badge-count {
-      position: absolute;
-      top: -6px;
-      right: -10px;
-      background: #ff9f00;
+      background: #ffe500;
       color: #000;
-      font-weight: 700;
-      font-size: 0.65rem;
-      padding: 1px 5px;
+      font-weight: 800;
+      font-size: 0.75rem;
+      padding: 1px 6px;
       border-radius: 10px;
     }
 
-    /* Grid layout */
-    .grid {
-      display: grid !important;
-      grid-template-columns: repeat(2, 1fr) !important;
-      gap: 10px !important;
+    /* Mobile Search Bar Strip (Visible Always on Mobile) */
+    .mobile-search-strip {
+      display: none;
+      background: #2874f0;
+      padding: 0 12px 10px 12px;
+    }
+
+    /* Breakpoint Logic for Search Bar Visibility */
+    @media (max-width: 767px) {
+      .desktop-search { display: none !important; }
+      .mobile-search-strip { display: block !important; }
     }
     @media (min-width: 768px) {
-      .grid {
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)) !important;
-        gap: 16px !important;
-      }
+      .hamburger-btn { display: none !important; }
+      .main-container { padding: 16px; }
     }
-    
-    /* Scrollable Mobile Categories Strip */
+
+    /* Categories Strip (Flipkart Style Icon Row) */
     .cat-strip-container {
-      display: flex !important;
-      overflow-x: auto !important;
-      white-space: nowrap !important;
-      padding: 10px 12px !important;
-      gap: 16px !important;
-      background: #fff !important;
-      border-bottom: 1px solid #e0e0e0 !important;
-      -webkit-overflow-scrolling: touch;
+      display: flex;
+      overflow-x: auto;
+      white-space: nowrap;
+      padding: 12px 16px;
+      gap: 24px;
+      background: #fff;
+      border-bottom: 1px solid #e0e0e0;
+      box-shadow: 0 1px 1px 0 rgba(0,0,0,.16);
+      margin-bottom: 12px;
     }
     .cat-strip-container::-webkit-scrollbar { display: none; }
     .cat-item {
-      display: inline-flex !important;
-      flex-direction: column !important;
-      align-items: center !important;
-      font-size: 0.75rem !important;
-      min-width: 56px !important;
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      font-size: 0.8rem;
+      font-weight: 600;
       cursor: pointer;
-      color: #333;
+      color: #212121;
     }
-    .cat-icon {
-      font-size: 1.4rem !important;
-      margin-bottom: 2px !important;
+    .cat-icon-circle {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: #f1f3f6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      margin-bottom: 6px;
     }
 
-    /* Card Optimization */
-    .card {
-      border: 1px solid #e0e0e0 !important;
-      border-radius: 8px !important;
-      padding: 8px !important;
-      background: #fff !important;
-      cursor: pointer;
+    /* Amazon/Flipkart Professional Card Design */
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
     }
-    .card-img {
-      width: 100% !important;
-      height: 130px !important;
-      object-fit: cover !important;
-      border-radius: 4px !important;
+    @media (min-width: 600px) {
+      .products-grid { grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    }
+    @media (min-width: 900px) {
+      .products-grid { grid-template-columns: repeat(4, 1fr); gap: 14px; }
+    }
+    @media (min-width: 1100px) {
+      .products-grid { grid-template-columns: repeat(5, 1fr); gap: 16px; }
     }
 
-    /* Hamburger Side Drawer Styles */
+    .product-card {
+      background: #fff;
+      border-radius: 4px;
+      padding: 12px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: box-shadow 0.2s ease, transform 0.2s ease;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .product-card:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      transform: translateY(-2px);
+    }
+    .product-card-img {
+      width: 100%;
+      height: 170px;
+      object-fit: contain;
+      margin-bottom: 10px;
+    }
+    .product-card-title {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #212121;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin-bottom: 6px;
+      line-height: 1.3;
+    }
+    .rating-badge {
+      background: #388e3c;
+      color: #fff;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 3px;
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      width: fit-content;
+      margin-bottom: 6px;
+    }
+    .price-row {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+    .main-price { font-size: 1rem; font-weight: 700; color: #212121; }
+    .offer-tag { font-size: 0.75rem; font-weight: 700; color: #388e3c; }
+
+    /* Drawer Styles */
     .side-drawer {
       position: fixed;
-      top: 0;
-      left: -270px;
-      width: 260px;
-      height: 100%;
-      background: #ffffff;
+      top: 0; left: -280px;
+      width: 270px; height: 100%;
+      background: #fff;
       box-shadow: 2px 0 10px rgba(0,0,0,0.25);
       z-index: 10000;
       transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      display: flex;
-      flex-direction: column;
     }
     .side-drawer.open { left: 0; }
     .drawer-overlay {
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
       background: rgba(0,0,0,0.5);
       z-index: 9999;
       display: none;
@@ -177,60 +275,68 @@ function injectMobileStyles() {
     .drawer-header {
       background: #2874f0;
       color: #fff;
-      padding: 18px 16px;
+      padding: 16px;
       font-weight: 700;
-      font-size: 1.1rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
-    .drawer-links {
-      display: flex;
-      flex-direction: column;
-    }
     .drawer-links a {
-      padding: 14px 20px;
+      padding: 14px 16px;
       color: #333;
       text-decoration: none;
       font-size: 0.95rem;
       font-weight: 500;
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 12px;
       border-bottom: 1px solid #f0f0f0;
     }
-    .drawer-links a:active { background: #f5f5f5; }
   `;
   document.head.appendChild(style);
 }
 
-// 2. Dynamic Header & Hamburger Drawer Setup
-function setupHeaderAndDrawer() {
-  const oldBottomNav = document.getElementById('mobile-bottom-nav');
-  if (oldBottomNav) oldBottomNav.remove();
-
-  // Inject Mobile Header
-  if (!document.getElementById('main-header')) {
+// 2. Persistent Responsive Header Setup
+function setupResponsiveHeader() {
+  const oldHeader = document.getElementById('main-header');
+  if (!oldHeader) {
     const header = document.createElement('header');
     header.id = 'main-header';
-    header.className = 'mobile-header';
+    header.className = 'app-header';
     header.innerHTML = `
-      <div class="header-left">
-        <button class="hamburger-btn" onclick="toggleDrawer(true)" aria-label="Open Menu">☰</button>
-        <a href="#home" class="brand-logo">Arcanix</a>
+      <div class="header-top">
+        <div class="header-left">
+          <button class="hamburger-btn" onclick="toggleDrawer(true)" aria-label="Open Menu">☰</button>
+          <a href="#home" class="brand-logo">Arcanix <span>Plus</span></a>
+        </div>
+
+        <!-- Desktop Search Bar -->
+        <div class="header-search-box desktop-search">
+          <input type="text" id="desktop-search-input" placeholder="Search for products, brands and more..." onkeydown="handleSearch(event, 'desktop-search-input')"/>
+          <button onclick="triggerSearch('desktop-search-input')">🔍</button>
+        </div>
+
+        <div class="header-right">
+          <a href="#account" id="account-nav-btn" class="header-link">
+            <span>👤</span> <span id="auth-btn-text">Login</span>
+          </a>
+          <a href="#cart" class="header-link">
+            <span>🛒</span> Cart <span class="badge-count" id="cart-count">0</span>
+          </a>
+        </div>
       </div>
-      <div class="header-right">
-        <a href="#search" class="header-icon-btn" aria-label="Search">🔍</a>
-        <a href="#cart" class="header-icon-btn" aria-label="Cart">
-          🛒<span class="badge-count" id="cart-count">0</span>
-        </a>
-        <a href="#account" id="account-nav-btn" class="header-icon-btn" style="font-size: 0.85rem; font-weight: 600;">Login</a>
+
+      <!-- Mobile Permanent Search Bar Strip -->
+      <div class="mobile-search-strip">
+        <div class="header-search-box" style="max-width: 100%;">
+          <input type="text" id="mobile-search-input" placeholder="Search products, brands and more..." onkeydown="handleSearch(event, 'mobile-search-input')"/>
+          <button onclick="triggerSearch('mobile-search-input')">🔍</button>
+        </div>
       </div>
     `;
     document.body.prepend(header);
   }
 
-  // Inject Drawer & Overlay
   if (!document.getElementById('hamburger-drawer')) {
     const drawer = document.createElement('div');
     drawer.id = 'hamburger-drawer';
@@ -238,11 +344,10 @@ function setupHeaderAndDrawer() {
     drawer.innerHTML = `
       <div class="drawer-header">
         <span>Arcanix Menu</span>
-        <span style="cursor:pointer; font-size:1.2rem;" onclick="toggleDrawer(false)">✕</span>
+        <span style="cursor:pointer;" onclick="toggleDrawer(false)">✕</span>
       </div>
       <div class="drawer-links">
         <a href="#home" onclick="toggleDrawer(false)"><span>🏠</span> Home</a>
-        <a href="#search" onclick="toggleDrawer(false)"><span>🔍</span> Search Products</a>
         <a href="#cart" onclick="toggleDrawer(false)"><span>🛒</span> My Cart</a>
         <a href="#account" onclick="toggleDrawer(false)"><span>👤</span> My Account</a>
       </div>
@@ -258,6 +363,18 @@ function setupHeaderAndDrawer() {
   }
 }
 
+// Search Actions
+window.handleSearch = function(e, inputId) {
+  if (e.key === 'Enter') triggerSearch(inputId);
+};
+
+window.triggerSearch = function(inputId) {
+  const query = document.getElementById(inputId).value.trim();
+  if (query) {
+    location.hash = `search?q=${encodeURIComponent(query)}`;
+  }
+};
+
 window.toggleDrawer = function(open) {
   const drawer = document.getElementById('hamburger-drawer');
   const overlay = document.getElementById('drawer-overlay');
@@ -272,15 +389,17 @@ window.toggleDrawer = function(open) {
 };
 
 function navigate() {
-  injectMobileStyles();
-  setupHeaderAndDrawer();
+  injectResponsiveStyles();
+  setupResponsiveHeader();
 
   const fullHash = window.location.hash.replace('#', '') || 'home';
   const [route, queryString] = fullHash.split('?');
   const params = new URLSearchParams(queryString);
   
   const renderFn = routes[route] || renderHomePage;
+  appContainer.className = 'main-container';
   appContainer.innerHTML = '';
+  
   loadDynamicCategoriesStrip();
   renderFn(params);
   updateCartBadge();
@@ -292,13 +411,15 @@ window.addEventListener('hashchange', navigate);
 window.addEventListener('DOMContentLoaded', navigate);
 
 function updateNavState() {
+  const authText = document.getElementById('auth-btn-text');
   const authBtn = document.getElementById('account-nav-btn');
-  if (!authBtn) return;
+  if (!authText || !authBtn) return;
+
   if (currentUser) {
-    authBtn.innerText = currentUser.displayName ? currentUser.displayName.split(' ')[0] : 'Account';
+    authText.innerText = currentUser.displayName ? currentUser.displayName.split(' ')[0] : 'Account';
     authBtn.href = '#account';
   } else {
-    authBtn.innerText = 'Login';
+    authText.innerText = 'Login';
     authBtn.href = '#auth';
   }
 }
@@ -308,25 +429,33 @@ function updateCartBadge() {
   if (badge) badge.innerText = window.cart.length;
 }
 
-// Global Category Strip Loader
+// Horizontal Scrollable Category Bar (Icon Circle UI)
 async function loadDynamicCategoriesStrip() {
-  const strip = document.getElementById('dynamic-cat-strip');
-  if (!strip) return;
+  let strip = document.getElementById('dynamic-cat-strip');
+  if (!strip) {
+    strip = document.createElement('div');
+    strip.id = 'dynamic-cat-strip';
+    appContainer.before(strip);
+  }
   strip.className = 'cat-strip-container';
 
   try {
     const snap = await getDocs(collection(db, "categories"));
     if (snap.empty) {
-      strip.innerHTML = '<div style="font-size:0.85rem; color:#878787; padding: 6px;">No categories available.</div>';
+      strip.innerHTML = '<div style="font-size:0.85rem; color:#878787;">No categories added yet.</div>';
       return;
     }
     strip.innerHTML = `
-      <div class="cat-item" onclick="location.hash='home'"><span class="cat-icon">🏠</span><span>All</span></div>
+      <div class="cat-item" onclick="location.hash='home'">
+        <div class="cat-icon-circle">🏠</div>
+        <span>All</span>
+      </div>
       ${snap.docs.map(docSnap => {
         const c = docSnap.data();
         return `
           <div class="cat-item" onclick="location.hash='plp?category=${encodeURIComponent(c.name)}'">
-            <span class="cat-icon">${c.icon || '📦'}</span><span>${c.name}</span>
+            <div class="cat-icon-circle">${c.icon || '📦'}</div>
+            <span>${c.name}</span>
           </div>
         `;
       }).join('')}
@@ -364,10 +493,10 @@ window.deleteItemByAdmin = async (colName, id) => {
 // 1. HOME PAGE
 async function renderHomePage() {
   appContainer.innerHTML = `
-    <div id="home-slider-container" style="margin: 10px 0;"></div>
-    <div style="padding: 10px;">
-      <h2 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 10px; color: #333;">Featured Products</h2>
-      <div class="grid" id="home-products-grid"><p style="color: #666;">Loading products...</p></div>
+    <div id="home-slider-container" style="margin-bottom: 16px;"></div>
+    <div style="background: #fff; padding: 16px; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+      <h2 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 14px; color:#212121;">Deals of the Day</h2>
+      <div class="products-grid" id="home-products-grid"><p style="color: #666;">Loading store items...</p></div>
     </div>
   `;
   fetchBanners();
@@ -386,10 +515,10 @@ async function fetchBanners() {
     const b = snap.docs[0].data();
     container.style.display = 'block';
     container.innerHTML = `
-      <div style="background: linear-gradient(90deg, #1e3c72, #2a5298); color: white; padding: 20px 14px; border-radius: 8px; text-align: center; background-image: url('${b.imageUrl}'); background-size: cover; background-position: center; min-height: 120px; display: flex; align-items: center; justify-content: center;">
-        <div style="background: rgba(0,0,0,0.55); padding: 10px 16px; border-radius: 6px; width: 100%;">
-          <h1 style="font-size: 1.2rem; font-weight: 800; margin-bottom: 4px; color: #fff;">${b.title || 'Welcome'}</h1>
-          <p style="font-size: 0.8rem; color: #eee; margin: 0;">${b.subtitle || ''}</p>
+      <div style="background-image: url('${b.imageUrl}'); background-size: cover; background-position: center; border-radius: 4px; min-height: 180px; display: flex; align-items: center; padding: 20px;">
+        <div style="background: rgba(255,255,255,0.92); padding: 16px 24px; border-radius: 4px; max-width: 500px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+          <h1 style="font-size: 1.3rem; font-weight: 800; color: #212121; margin-bottom: 4px;">${b.title || 'Welcome'}</h1>
+          <p style="font-size: 0.85rem; color: #388e3c; font-weight: 700;">${b.subtitle || ''}</p>
         </div>
       </div>
     `;
@@ -402,9 +531,9 @@ async function fetchBanners() {
 async function renderCategoryProductsPage(params) {
   const categoryName = params.get('category') || '';
   appContainer.innerHTML = `
-    <div style="padding: 10px;">
-      <h2 style="font-size: 1.05rem; margin-bottom: 10px;">Category: <b>${categoryName}</b></h2>
-      <div class="grid" id="plp-grid"><p style="color: #666;">Loading products...</p></div>
+    <div style="background:#fff; padding: 16px; border-radius:4px;">
+      <h2 style="font-size: 1.1rem; margin-bottom: 14px; color:#212121;">Showing results for: <b>${categoryName}</b></h2>
+      <div class="products-grid" id="plp-grid"><p style="color: #666;">Loading products...</p></div>
     </div>
   `;
   fetchProductsGrid(document.getElementById('plp-grid'), '', categoryName);
@@ -414,34 +543,36 @@ async function renderCategoryProductsPage(params) {
 async function renderProductDetailPage(params) {
   const id = params.get('id');
   if (!id) return;
-  appContainer.innerHTML = `<p style="padding:16px;">Loading item details...</p>`;
+  appContainer.innerHTML = `<p style="padding:20px; background:#fff;">Loading product specifications...</p>`;
   try {
     const snap = await getDoc(doc(db, "products", id));
     if (!snap.exists()) return;
     const p = snap.data();
 
     appContainer.innerHTML = `
-      <div style="padding: 12px; background: #fff;">
-        <img src="${p.imageUrl || 'https://via.placeholder.com/400'}" style="width: 100%; border-radius: 8px; max-height: 280px; object-fit: cover; margin-bottom: 14px;"/>
-        <div style="display: flex; gap: 8px; margin-bottom: 16px;">
-          <button onclick="addToCart('${id}', '${p.title}', ${p.price}, '${p.imageUrl}')" style="flex: 1; padding: 12px 8px; font-size: 0.9rem; font-weight:700; background:#ff9f00; color:#fff; border:none; border-radius:4px;">ADD TO CART</button>
-          <button onclick="addToCart('${id}', '${p.title}', ${p.price}, '${p.imageUrl}'); location.hash='checkout';" style="flex: 1; padding: 12px 8px; font-size: 0.9rem; font-weight:700; background:#fb641b; color:#fff; border:none; border-radius:4px;">BUY NOW</button>
-        </div>
-        <div>
-          <h1 style="font-size: 1.15rem; font-weight: 600; margin-bottom: 6px;">${p.title}</h1>
-          <div style="font-size:0.8rem; color:#2874f0; font-weight:600; margin-bottom:8px;">Category: ${p.category || 'General'}</div>
-          <div style="background:#388e3c; color:#fff; font-size:0.75rem; display:inline-block; padding:2px 6px; border-radius:4px; margin-bottom: 10px;">4.5 ★</div>
-          <div style="margin-bottom: 12px;">
-            <span style="font-size: 1.3rem; font-weight:800; color:#212121;">$${p.price}</span>
-            ${p.tag ? `<span style="color:#388e3c; font-size:0.8rem; font-weight:700; margin-left:8px;">${p.tag}</span>` : ''}
+      <div style="background: #fff; border-radius:4px; padding: 20px; display: flex; flex-wrap: wrap; gap: 32px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+        <div style="flex: 1 1 320px; text-align: center;">
+          <img src="${p.imageUrl || 'https://via.placeholder.com/400'}" style="width: 100%; max-height: 380px; object-fit: contain; margin-bottom: 20px;"/>
+          <div style="display: flex; gap: 12px;">
+            <button onclick="addToCart('${id}', '${p.title}', ${p.price}, '${p.imageUrl}')" style="flex: 1; padding: 14px 8px; font-size: 0.95rem; font-weight:700; background:#ff9f00; color:#fff; border:none; border-radius:2px; cursor:pointer;">ADD TO CART</button>
+            <button onclick="addToCart('${id}', '${p.title}', ${p.price}, '${p.imageUrl}'); location.hash='checkout';" style="flex: 1; padding: 14px 8px; font-size: 0.95rem; font-weight:700; background:#fb641b; color:#fff; border:none; border-radius:2px; cursor:pointer;">BUY NOW</button>
           </div>
-          <h4 style="margin-bottom: 6px; font-size: 0.95rem;">Description:</h4>
-          <p style="color: #555; font-size: 0.85rem; line-height: 1.5; white-space: pre-line;">${p.description || 'No description provided.'}</p>
+        </div>
+        <div style="flex: 1 1 320px;">
+          <h1 style="font-size: 1.3rem; font-weight: 500; margin-bottom: 8px; color:#212121; line-height:1.4;">${p.title}</h1>
+          <div class="rating-badge" style="margin-bottom: 12px;">4.5 ★</div>
+          <div style="font-size:0.85rem; color:#878787; font-weight:600; margin-bottom:14px;">Category: ${p.category || 'General'}</div>
+          <div style="margin-bottom: 20px; border-bottom:1px solid #f0f0f0; padding-bottom:14px;">
+            <span style="font-size: 1.8rem; font-weight:800; color:#212121;">$${p.price}</span>
+            ${p.tag ? `<span style="color:#388e3c; font-size:0.9rem; font-weight:700; margin-left:12px;">${p.tag}</span>` : ''}
+          </div>
+          <h4 style="margin-bottom: 8px; font-size: 0.95rem; font-weight:700; color:#212121;">Product Details:</h4>
+          <p style="color: #555; font-size: 0.9rem; line-height: 1.6; white-space: pre-line;">${p.description || 'No description provided.'}</p>
         </div>
       </div>
     `;
   } catch (err) {
-    appContainer.innerHTML = `<p style="padding:16px;">Error loading product details.</p>`;
+    appContainer.innerHTML = `<p>Error loading product details.</p>`;
   }
 }
 
@@ -449,9 +580,9 @@ async function renderProductDetailPage(params) {
 function renderSearchResultsPage(params) {
   const query = params.get('q') || '';
   appContainer.innerHTML = `
-    <div style="padding: 10px;">
-      <h2 style="font-size: 1.05rem;">Search Results for "${query}"</h2>
-      <div class="grid" id="search-grid" style="margin-top: 10px;"></div>
+    <div style="background:#fff; padding: 16px; border-radius:4px;">
+      <h2 style="font-size: 1.1rem; margin-bottom: 12px; color:#212121;">Search Results for "${query}"</h2>
+      <div class="products-grid" id="search-grid"></div>
     </div>
   `;
   fetchProductsGrid(document.getElementById('search-grid'), query);
@@ -460,37 +591,41 @@ function renderSearchResultsPage(params) {
 // 5. CART PAGE
 function renderCartPage() {
   if (window.cart.length === 0) {
-    appContainer.innerHTML = `<div style="text-align: center; padding: 40px 16px; background:#fff;"><h2>Cart is Empty!</h2><br/><a href="#home" style="display:inline-block; padding:10px 20px; background:#fb641b; color:#fff; text-decoration:none; border-radius:4px;">Shop Now</a></div>`;
+    appContainer.innerHTML = `<div style="text-align: center; padding: 50px 16px; background:#fff; border-radius:4px; box-shadow:0 1px 2px rgba(0,0,0,0.05);"><h2>Your Shopping Cart is Empty!</h2><br/><a href="#home" style="display:inline-block; padding:12px 28px; background:#2874f0; color:#fff; text-decoration:none; border-radius:2px; font-weight:700; font-size:0.9rem;">Shop Now</a></div>`;
     return;
   }
   let total = window.cart.reduce((sum, item) => sum + item.price, 0);
 
   appContainer.innerHTML = `
-    <div style="padding: 10px; display: flex; flex-direction: column; gap: 12px;">
-      <div style="background:#fff; padding: 12px; border-radius:6px;">
-        <h3 style="margin-bottom: 12px; font-size: 1rem;">My Cart (${window.cart.length})</h3>
+    <div style="display: flex; flex-wrap: wrap; gap: 16px;">
+      <div style="flex: 2 1 320px; background:#fff; padding: 16px; border-radius:4px; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+        <h3 style="margin-bottom: 16px; font-size: 1.1rem; border-bottom:1px solid #f0f0f0; padding-bottom:10px;">My Cart (${window.cart.length})</h3>
         ${window.cart.map((item, idx) => `
-          <div style="display: flex; gap: 12px; padding: 10px 0; border-top: 1px solid #eee; align-items: center;">
-            <img src="${item.image}" style="width: 55px; height: 55px; object-fit: cover; border-radius: 4px;"/>
+          <div style="display: flex; gap: 16px; padding: 14px 0; border-bottom: 1px solid #f0f0f0; align-items: center;">
+            <img src="${item.image}" style="width: 70px; height: 70px; object-fit: contain;"/>
             <div style="flex: 1;">
-              <h4 style="font-size: 0.85rem; margin-bottom: 4px;">${item.title}</h4>
-              <div><span style="font-weight:700; font-size: 0.95rem;">$${item.price}</span></div>
+              <h4 style="font-size: 0.9rem; font-weight:500; margin-bottom: 6px; color:#212121;">${item.title}</h4>
+              <div><span style="font-weight:700; font-size: 1.05rem; color:#212121;">$${item.price}</span></div>
             </div>
-            <button onclick="removeFromCart(${idx})" style="background:none; border:none; color: #d32f2f; font-size: 0.8rem; font-weight:700; padding: 4px 8px; cursor:pointer;">REMOVE</button>
+            <button onclick="removeFromCart(${idx})" style="background:none; border:none; color: #2874f0; font-size: 0.85rem; font-weight:700; cursor:pointer;">REMOVE</button>
           </div>
         `).join('')}
       </div>
-      <div style="background:#fff; padding: 14px; border-radius:6px;">
-        <h4 style="color: #878787; border-bottom: 1px solid #eee; padding-bottom: 6px; margin-bottom: 10px; font-size: 0.85rem;">PRICE DETAILS</h4>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.85rem;">
-          <span>Items (${window.cart.length})</span>
+      <div style="flex: 1 1 260px; background:#fff; padding: 16px; border-radius:4px; height: fit-content; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+        <h4 style="color: #878787; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 14px; font-size: 0.85rem; font-weight:700;">PRICE DETAILS</h4>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 0.9rem;">
+          <span>Price (${window.cart.length} items)</span>
           <span>$${total.toFixed(2)}</span>
         </div>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 14px; font-weight: 800; border-top: 1px dashed #ccc; padding-top: 10px;">
-          <span>Total Amount</span>
-          <span style="color: #388e3c;">$${total.toFixed(2)}</span>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 0.9rem; color:#388e3c;">
+          <span>Delivery Charges</span>
+          <span>FREE</span>
         </div>
-        <button onclick="location.hash='checkout'" style="width: 100%; padding: 12px; background:#fb641b; color:#fff; font-weight:700; border:none; border-radius:4px; cursor:pointer;">PLACE ORDER</button>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 18px; font-weight: 800; border-top: 1px dashed #e0e0e0; padding-top: 14px; font-size: 1.1rem;">
+          <span>Total Amount</span>
+          <span>$${total.toFixed(2)}</span>
+        </div>
+        <button onclick="location.hash='checkout'" style="width: 100%; padding: 13px; background:#fb641b; color:#fff; font-weight:700; border:none; border-radius:2px; cursor:pointer; font-size:0.95rem;">PLACE ORDER</button>
       </div>
     </div>
   `;
@@ -500,14 +635,14 @@ function renderCartPage() {
 function renderCheckoutPage() {
   let total = window.cart.reduce((sum, item) => sum + item.price, 0);
   appContainer.innerHTML = `
-    <div style="padding: 14px; background:#fff; margin:10px; border-radius:6px;">
-      <h2 style="margin-bottom: 14px; font-size: 1.1rem;">Checkout ($${total.toFixed(2)})</h2>
+    <div style="padding: 24px; background:#fff; max-width: 600px; margin: 0 auto; border-radius:4px; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+      <h2 style="margin-bottom: 18px; font-size: 1.2rem; border-bottom:1px solid #f0f0f0; padding-bottom:10px;">Order Summary ($${total.toFixed(2)})</h2>
       <form id="checkout-form">
-        <div style="margin-bottom:12px;"><label style="display:block; font-size:0.8rem; margin-bottom:4px;">Delivery Address</label><textarea required placeholder="Full Address..." style="width:100%; height:70px; padding:8px; border:1px solid #ccc; border-radius:4px;"></textarea></div>
-        <div style="margin-bottom:16px;"><label style="display:block; font-size:0.8rem; margin-bottom:4px;">Payment Method</label>
-          <select style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;"><option>UPI / NetBanking</option><option>Credit/Debit Card</option><option>Cash on Delivery</option></select>
+        <div style="margin-bottom:14px;"><label style="display:block; font-size:0.85rem; margin-bottom:6px; font-weight:600;">Delivery Address</label><textarea required placeholder="Enter complete address..." style="width:100%; height:80px; padding:10px; border:1px solid #ccc; border-radius:2px; font-size:0.9rem;"></textarea></div>
+        <div style="margin-bottom:20px;"><label style="display:block; font-size:0.85rem; margin-bottom:6px; font-weight:600;">Payment Mode</label>
+          <select style="width:100%; padding:10px; border:1px solid #ccc; border-radius:2px; font-size:0.9rem;"><option>UPI / NetBanking</option><option>Credit / Debit Card</option><option>Cash on Delivery</option></select>
         </div>
-        <button type="submit" style="width: 100%; padding: 12px; background:#fb641b; color:#fff; font-weight:700; border:none; border-radius:4px;">CONFIRM ORDER</button>
+        <button type="submit" style="width: 100%; padding: 14px; background:#fb641b; color:#fff; font-weight:700; border:none; border-radius:2px; cursor:pointer; font-size:1rem;">CONFIRM & PAY</button>
       </form>
     </div>
   `;
@@ -523,10 +658,10 @@ function renderCheckoutPage() {
 // 7. ORDER CONFIRMATION
 function renderOrderConfirmationPage() {
   appContainer.innerHTML = `
-    <div style="text-align: center; padding: 40px 16px; background:#fff;">
-      <h2 style="color: #388e3c; font-size: 1.3rem;">🎉 Order Confirmed!</h2>
-      <p style="margin: 10px 0 16px 0; font-size: 0.85rem;">Thank you for shopping with us.</p>
-      <a href="#home" style="display:inline-block; padding:10px 20px; background:#ff9f00; color:#fff; text-decoration:none; border-radius:4px; font-weight:700;">Continue Shopping</a>
+    <div style="text-align: center; padding: 50px 16px; background:#fff; border-radius:4px; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+      <h2 style="color: #388e3c; font-size: 1.5rem; margin-bottom:8px;">🎉 Order Placed Successfully!</h2>
+      <p style="margin-bottom: 24px; color:#666; font-size: 0.95rem;">An email confirmation has been sent to your registered account.</p>
+      <a href="#home" style="display:inline-block; padding:12px 28px; background:#2874f0; color:#fff; text-decoration:none; border-radius:2px; font-weight:700;">Continue Shopping</a>
     </div>
   `;
 }
@@ -534,15 +669,15 @@ function renderOrderConfirmationPage() {
 // 8. AUTHENTICATION (Google Login Refresh Fix Included)
 function renderAuthPage() {
   appContainer.innerHTML = `
-    <div style="padding: 16px; background:#fff; margin: 10px; border-radius: 6px;">
-      <h2 style="text-align: center; margin-bottom: 16px; font-size: 1.2rem;">Account Login</h2>
-      <button type="button" id="google-login-btn" style="width: 100%; margin-bottom: 16px; padding: 10px; background:#fff; border:1px solid #ccc; border-radius:4px; font-weight:600; display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer;">
-        <span>🌐</span> Continue with Google
+    <div style="padding: 24px; background:#fff; max-width: 400px; margin: 20px auto; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.12);">
+      <h2 style="text-align: center; margin-bottom: 20px; font-size: 1.3rem; color:#2874f0; font-weight:800;">Login / Sign Up</h2>
+      <button type="button" id="google-login-btn" style="width: 100%; margin-bottom: 16px; padding: 11px; background:#fff; border:1px solid #ccc; border-radius:2px; font-weight:600; display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer;">
+        <span>🌐</span> Sign in with Google
       </button>
       <form id="email-form">
-        <div style="margin-bottom:10px;"><label style="display:block; font-size:0.8rem;">Email Address</label><input type="email" id="a-email" required style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;"/></div>
-        <div style="margin-bottom:14px;"><label style="display:block; font-size:0.8rem;">Password</label><input type="password" id="a-pass" required style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;"/></div>
-        <button type="submit" style="width: 100%; padding: 10px; background:#fb641b; color:#fff; font-weight:700; border:none; border-radius:4px;">Login</button>
+        <div style="margin-bottom:12px;"><label style="display:block; font-size:0.85rem; margin-bottom:4px;">Email</label><input type="email" id="a-email" required style="width:100%; padding:10px; border:1px solid #ccc; border-radius:2px;"/></div>
+        <div style="margin-bottom:16px;"><label style="display:block; font-size:0.85rem; margin-bottom:4px;">Password</label><input type="password" id="a-pass" required style="width:100%; padding:10px; border:1px solid #ccc; border-radius:2px;"/></div>
+        <button type="submit" style="width: 100%; padding: 12px; background:#fb641b; color:#fff; font-weight:700; border:none; border-radius:2px; cursor:pointer;">CONTINUE</button>
       </form>
     </div>
   `;
@@ -574,13 +709,13 @@ function renderUserDashboardPage() {
   const isAdmin = currentUser.email && currentUser.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
   
   appContainer.innerHTML = `
-    <div style="padding: 20px; background:#fff; text-align: center; margin: 10px; border-radius:6px;">
-      <h3>User Profile</h3>
-      <p style="color: #666; margin: 6px 0 16px 0; font-size: 0.85rem;">${currentUser.email}</p>
-      <div style="display: flex; flex-direction: column; gap: 8px; align-items: center; margin-bottom: 16px;">
-        ${isAdmin ? `<a href="#seller-dashboard" style="display:block; width:100%; padding:10px; background:#ff9f00; color:#fff; text-decoration:none; font-weight:700; border-radius:4px;">⚙️ Admin Control Panel CMS</a>` : ''}
+    <div style="padding: 24px; background:#fff; text-align: center; max-width: 480px; margin: 0 auto; border-radius:4px; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+      <h3 style="font-size: 1.2rem;">My Account</h3>
+      <p style="color: #666; margin: 6px 0 20px 0; font-size: 0.9rem;">${currentUser.email}</p>
+      <div style="display: flex; flex-direction: column; gap: 12px; align-items: center; margin-bottom: 20px;">
+        ${isAdmin ? `<a href="#seller-dashboard" style="display:block; width:100%; padding:12px; background:#2874f0; color:#fff; text-decoration:none; font-weight:700; border-radius:2px;">⚙️ Admin Control Panel (CMS)</a>` : ''}
       </div>
-      <button id="so-btn" style="width:100%; padding:10px; background:none; border:1px solid #ccc; border-radius:4px; cursor:pointer;">Logout</button>
+      <button id="so-btn" style="width:100%; padding:12px; background:none; border:1px solid #ccc; border-radius:2px; cursor:pointer; font-weight:600; color:#d32f2f;">Logout Account</button>
     </div>
   `;
   document.getElementById('so-btn').onclick = () => signOut(auth).then(() => location.hash = 'auth');
@@ -594,55 +729,56 @@ async function renderSellerDashboardPage() {
   }
 
   appContainer.innerHTML = `
-    <div style="padding: 12px; background:#fff; margin:10px; border-radius:6px;">
-      <h2 style="font-size: 1.1rem; margin-bottom: 4px;">⚙️ Admin CMS</h2>
-      <p style="color: #666; margin-bottom: 16px; font-size: 0.8rem;">Manage Banners, Categories & Products live on Firebase.</p>
+    <div style="padding: 20px; background:#fff; border-radius:4px; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+      <h2 style="font-size: 1.2rem; margin-bottom: 4px;">⚙️ Admin Panel (E-Commerce CMS)</h2>
+      <p style="color: #666; margin-bottom: 20px; font-size: 0.85rem;">Manage Banners, Categories & Live Products.</p>
 
-      <div style="display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px;">
+      <div style="display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 24px;">
         
         <!-- SECTION A: Add Slider / Banner -->
-        <form id="admin-banner-form" style="background: #fafafa; padding: 12px; border: 1px solid #eee; border-radius: 6px;">
-          <h4 style="margin-bottom: 8px;">1. Add Main Banner</h4>
-          <div style="margin-bottom:8px;"><label style="font-size:0.75rem;">Banner Title</label><input type="text" id="b-title" required placeholder="MEGA SALE" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;"/></div>
-          <div style="margin-bottom:8px;"><label style="font-size:0.75rem;">Subtitle</label><input type="text" id="b-subtitle" placeholder="50% OFF" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;"/></div>
-          <div style="margin-bottom:8px;"><label style="font-size:0.75rem;">Image URL</label><input type="url" id="b-image" required placeholder="https://..." style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;"/></div>
-          <button type="submit" style="width:100%; padding:8px; background:#fb641b; color:#fff; border:none; border-radius:4px; font-weight:700;">Save Banner</button>
+        <form id="admin-banner-form" style="flex: 1 1 300px; background: #fafafa; padding: 16px; border: 1px solid #eee; border-radius: 4px;">
+          <h4 style="margin-bottom: 12px;">1. Add Hero Banner</h4>
+          <div style="margin-bottom:8px;"><label style="font-size:0.8rem;">Title</label><input type="text" id="b-title" required placeholder="FESTIVE SALE" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:2px;"/></div>
+          <div style="margin-bottom:8px;"><label style="font-size:0.8rem;">Subtitle</label><input type="text" id="b-subtitle" placeholder="Up to 80% OFF" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:2px;"/></div>
+          <div style="margin-bottom:12px;"><label style="font-size:0.8rem;">Image URL</label><input type="url" id="b-image" required placeholder="https://..." style="width:100%; padding:6px; border:1px solid #ccc; border-radius:2px;"/></div>
+          <button type="submit" style="width:100%; padding:8px; background:#fb641b; color:#fff; border:none; border-radius:2px; font-weight:700; cursor:pointer;">Save Banner</button>
         </form>
 
         <!-- SECTION B: Add Category -->
-        <form id="admin-cat-form" style="background: #fafafa; padding: 12px; border: 1px solid #eee; border-radius: 6px;">
-          <h4 style="margin-bottom: 8px;">2. Add New Category</h4>
-          <div style="margin-bottom:8px;"><label style="font-size:0.75rem;">Category Name</label><input type="text" id="c-name" required placeholder="e.g. Games" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;"/></div>
-          <div style="margin-bottom:8px;"><label style="font-size:0.75rem;">Category Emoji/Icon</label><input type="text" id="c-icon" placeholder="🎮" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;"/></div>
-          <button type="submit" id="c-submit-btn" style="width:100%; padding:8px; background:#ff9f00; color:#fff; border:none; border-radius:4px; font-weight:700;">Save Category</button>
+        <form id="admin-cat-form" style="flex: 1 1 300px; background: #fafafa; padding: 16px; border: 1px solid #eee; border-radius: 4px;">
+          <h4 style="margin-bottom: 12px;">2. Add Category</h4>
+          <div style="margin-bottom:8px;"><label style="font-size:0.8rem;">Category Name</label><input type="text" id="c-name" required placeholder="Electronics" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:2px;"/></div>
+          <div style="margin-bottom:12px;"><label style="font-size:0.8rem;">Icon Emoji</label><input type="text" id="c-icon" placeholder="⚡" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:2px;"/></div>
+          <button type="submit" id="c-submit-btn" style="width:100%; padding:8px; background:#2874f0; color:#fff; border:none; border-radius:2px; font-weight:700; cursor:pointer;">Save Category</button>
         </form>
 
       </div>
 
       <!-- SECTION C: Add Product -->
-      <form id="seller-add-form" style="background: #fafafa; padding: 12px; border: 1px solid #eee; border-radius: 6px; margin-bottom: 24px;">
-        <h4 style="margin-bottom: 8px;">3. Add New Product</h4>
-        <div style="margin-bottom:8px;"><label style="font-size:0.75rem;">Title</label><input type="text" id="p-title" required placeholder="Wireless Mouse" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;"/></div>
-        <div style="margin-bottom:8px;">
-          <label style="font-size:0.75rem;">Category</label>
-          <select id="p-category" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius:4px;">
-            <option value="General">General</option>
-          </select>
+      <form id="seller-add-form" style="background: #fafafa; padding: 16px; border: 1px solid #eee; border-radius: 4px; margin-bottom: 24px;">
+        <h4 style="margin-bottom: 12px;">3. Publish New Product</h4>
+        <div style="display: flex; flex-wrap: wrap; gap: 12px;">
+          <div style="flex: 1 1 200px; margin-bottom:8px;"><label style="font-size:0.8rem;">Title</label><input type="text" id="p-title" required placeholder="Headphones" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:2px;"/></div>
+          <div style="flex: 1 1 200px; margin-bottom:8px;">
+            <label style="font-size:0.8rem;">Category</label>
+            <select id="p-category" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius:2px;">
+              <option value="General">General</option>
+            </select>
+          </div>
+          <div style="flex: 1 1 200px; margin-bottom:8px;"><label style="font-size:0.8rem;">Price ($)</label><input type="number" step="0.01" id="p-price" required placeholder="49.99" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:2px;"/></div>
+          <div style="flex: 1 1 200px; margin-bottom:8px;"><label style="font-size:0.8rem;">Offer Tag</label><input type="text" id="p-tag" placeholder="Hot Deal" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:2px;"/></div>
+          <div style="flex: 1 1 100%; margin-bottom:8px;"><label style="font-size:0.8rem;">Image URL</label><input type="url" id="p-image" required placeholder="https://..." style="width:100%; padding:6px; border:1px solid #ccc; border-radius:2px;"/></div>
+          <div style="flex: 1 1 100%; margin-bottom:12px;"><label style="font-size:0.8rem;">Description</label><textarea id="p-desc" rows="2" required placeholder="Product specifications..." style="width:100%; padding:6px; border:1px solid #ccc; border-radius:2px;"></textarea></div>
         </div>
-        <div style="margin-bottom:8px;"><label style="font-size:0.75rem;">Price ($)</label><input type="number" step="0.01" id="p-price" required placeholder="29.99" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;"/></div>
-        <div style="margin-bottom:8px;"><label style="font-size:0.75rem;">Offer Tag</label><input type="text" id="p-tag" placeholder="20% OFF" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;"/></div>
-        <div style="margin-bottom:8px;"><label style="font-size:0.75rem;">Image URL</label><input type="url" id="p-image" required placeholder="https://..." style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;"/></div>
-        <div style="margin-bottom:8px;"><label style="font-size:0.75rem;">Description</label><textarea id="p-desc" rows="2" required placeholder="Description..." style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;"></textarea></div>
-        <button type="submit" style="width:100%; padding:8px; background:#fb641b; color:#fff; border:none; border-radius:4px; font-weight:700;">PUBLISH PRODUCT</button>
+        <button type="submit" style="width:100%; padding:10px; background:#fb641b; color:#fff; border:none; border-radius:2px; font-weight:700; cursor:pointer;">PUBLISH PRODUCT NOW</button>
       </form>
 
       <!-- SECTION D: Manage Live Products -->
-      <h4 style="margin-bottom: 8px;">Manage Live Products</h4>
+      <h4 style="margin-bottom: 12px;">Manage Live Products</h4>
       <div id="admin-items-list" style="overflow-x: auto;"></div>
     </div>
   `;
 
-  // Fetch Categories
   async function populateCategoryDropdown() {
     const catSelect = document.getElementById('p-category');
     if (!catSelect) return;
@@ -665,7 +801,6 @@ async function renderSellerDashboardPage() {
 
   await populateCategoryDropdown();
 
-  // Category Submit
   document.getElementById('admin-cat-form').onsubmit = async (e) => {
     e.preventDefault();
     const submitBtn = document.getElementById('c-submit-btn');
@@ -697,7 +832,6 @@ async function renderSellerDashboardPage() {
     }
   };
 
-  // Banner Submit
   document.getElementById('admin-banner-form').onsubmit = async (e) => {
     e.preventDefault();
     try {
@@ -715,7 +849,6 @@ async function renderSellerDashboardPage() {
     }
   };
 
-  // Product Submit
   document.getElementById('seller-add-form').onsubmit = async (e) => {
     e.preventDefault();
     try {
@@ -736,27 +869,26 @@ async function renderSellerDashboardPage() {
     }
   };
 
-  // Admin Items Table
   const itemsContainer = document.getElementById('admin-items-list');
   try {
     const prodSnap = await getDocs(collection(db, "products"));
     if (prodSnap.empty) {
-      itemsContainer.innerHTML = '<p style="color:#878787;">No products yet.</p>';
+      itemsContainer.innerHTML = '<p style="color:#878787;">No live products found.</p>';
       return;
     }
 
     itemsContainer.innerHTML = `
-      <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem;">
-        <thead><tr style="border-bottom: 1px solid #ccc;"><th style="padding:6px;">Img</th><th style="padding:6px;">Title</th><th style="padding:6px;">Price</th><th style="padding:6px;">Action</th></tr></thead>
+      <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+        <thead><tr style="border-bottom: 2px solid #e0e0e0; text-align:left;"><th style="padding:10px;">Item</th><th style="padding:10px;">Title</th><th style="padding:10px;">Price</th><th style="padding:10px;">Action</th></tr></thead>
         <tbody>
           ${prodSnap.docs.map(docSnap => {
             const data = docSnap.data();
             return `
               <tr style="border-bottom: 1px solid #eee;">
-                <td style="padding:6px;"><img src="${data.imageUrl}" style="width: 32px; height: 32px; object-fit: cover; border-radius: 4px;"/></td>
-                <td style="padding:6px;"><b>${data.title}</b></td>
-                <td style="padding:6px;">$${data.price}</td>
-                <td style="padding:6px;"><button onclick="deleteItemByAdmin('products', '${docSnap.id}')" style="background:#d32f2f; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">Del</button></td>
+                <td style="padding:8px;"><img src="${data.imageUrl}" style="width: 40px; height: 40px; object-fit: contain;"/></td>
+                <td style="padding:8px;"><b>${data.title}</b></td>
+                <td style="padding:8px;">$${data.price}</td>
+                <td style="padding:8px;"><button onclick="deleteItemByAdmin('products', '${docSnap.id}')" style="background:#d32f2f; color:#fff; border:none; padding:4px 10px; border-radius:2px; cursor:pointer;">Delete</button></td>
               </tr>
             `;
           }).join('')}
@@ -768,14 +900,14 @@ async function renderSellerDashboardPage() {
   }
 }
 
-// Fetch Products Grid
+// Fetch Amazon/Flipkart Styled Product Grid
 async function fetchProductsGrid(container, searchQuery = '', categoryFilter = '') {
   try {
     const snap = await getDocs(collection(db, "products"));
     container.innerHTML = '';
     
     if (snap.empty) {
-      container.innerHTML = '<p style="grid-column: 1/-1; padding:10px;">No products found in the store yet.</p>';
+      container.innerHTML = '<p style="grid-column: 1/-1;">No products found in store.</p>';
       return;
     }
 
@@ -786,20 +918,20 @@ async function fetchProductsGrid(container, searchQuery = '', categoryFilter = '
       if (categoryFilter && p.category !== categoryFilter) return;
 
       container.innerHTML += `
-        <div class="card" onclick="location.hash='pdp?id=${docSnap.id}'">
-          <img src="${p.imageUrl || 'https://via.placeholder.com/200'}" class="card-img"/>
-          <h3 style="font-size: 0.85rem; font-weight: 600; margin: 6px 0 4px 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color:#212121;">${p.title}</h3>
-          <div style="margin-bottom: 4px;">
-            <span style="background:#388e3c; color:#fff; font-size: 0.65rem; font-weight:700; padding: 2px 4px; border-radius:3px;">4.5 ★</span>
-          </div>
+        <div class="product-card" onclick="location.hash='pdp?id=${docSnap.id}'">
+          <img src="${p.imageUrl || 'https://via.placeholder.com/200'}" class="product-card-img"/>
           <div>
-            <span style="font-weight:700; font-size: 0.95rem; color:#212121;">$${p.price}</span>
-            ${p.tag ? `<span style="color:#388e3c; font-size: 0.7rem; font-weight:700; margin-left:4px;">${p.tag}</span>` : ''}
+            <div class="product-card-title">${p.title}</div>
+            <div class="rating-badge">4.5 ★</div>
+            <div class="price-row">
+              <span class="main-price">$${p.price}</span>
+              ${p.tag ? `<span class="offer-tag">${p.tag}</span>` : ''}
+            </div>
           </div>
         </div>
       `;
     });
   } catch (err) {
-    container.innerHTML = `<p style="padding:10px;">Error loading store items.</p>`;
+    container.innerHTML = `<p>Error loading store items.</p>`;
   }
 }
