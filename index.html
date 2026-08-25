@@ -3,80 +3,52 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Arcanix Digital Marketplace</title>
+  <title>Arcanix Multi-Vendor Store</title>
   <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
 
-  <nav>
+  <!-- Global Header -->
+  <nav class="main-nav">
     <div class="nav-container">
-      <a href="index.html" class="brand-logo">Arcanix <span>PRO</span></a>
+      <a href="#home" class="brand-logo">Arcanix <span>MARKET</span></a>
+      <div class="nav-search">
+        <input type="text" id="global-search-input" placeholder="Search products, brands, sellers..."/>
+        <button id="search-btn" class="btn btn-primary">Search</button>
+      </div>
       <div class="nav-actions">
-        <a href="admin.html" id="admin-panel-link" class="btn btn-outline" style="display: none; color: var(--danger);">⚙️ Admin Panel</a>
-        <a href="auth.html" id="nav-auth-btn" class="btn btn-primary">Sign In</a>
+        <a href="#wishlist" class="nav-link">❤️ Wishlist</a>
+        <a href="#cart" class="nav-link">🛒 Cart (<span id="cart-count">0</span>)</a>
+        <a href="#account" id="account-nav-btn" class="btn btn-outline">Sign In</a>
       </div>
     </div>
   </nav>
 
-  <div class="container">
-    <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 20px;">Available Assets</h2>
-    <div id="product-grid" class="grid">
-      <p style="color: var(--text-muted);">Loading assets...</p>
+  <!-- DYNAMIC VIEW CONTAINER -->
+  <main id="app-view" class="container">
+    <!-- Active page views JavaScript dwara injection hongay -->
+  </main>
+
+  <!-- Global Footer -->
+  <footer class="main-footer">
+    <div class="footer-links">
+      <div>
+        <h4>Support & Legal</h4>
+        <a href="#help">Help Center / FAQ</a>
+        <a href="#contact">Contact Us</a>
+        <a href="#privacy">Privacy Policy</a>
+        <a href="#terms">Terms & Conditions</a>
+        <a href="#returns">Return & Refund Policy</a>
+        <a href="#shipping">Shipping & Delivery Policy</a>
+      </div>
+      <div>
+        <h4>Sell on Arcanix</h4>
+        <a href="#seller-register">Become a Seller</a>
+        <a href="#seller-dashboard">Seller Dashboard</a>
+      </div>
     </div>
-  </div>
+  </footer>
 
-  <script type="module">
-    import { db, auth, onAuthStateChanged, ADMIN_EMAIL } from './firebase-config.js';
-    import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-    const adminPanelLink = document.getElementById('admin-panel-link');
-    const navAuthBtn = document.getElementById('nav-auth-btn');
-
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        navAuthBtn.innerText = user.displayName ? user.displayName.split(' ')[0] : 'Account';
-        if (user.email && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
-          adminPanelLink.style.display = "inline-flex";
-        }
-      } else {
-        navAuthBtn.innerText = "Sign In";
-        adminPanelLink.style.display = "none";
-      }
-    });
-
-    async function loadProducts() {
-      const grid = document.getElementById('product-grid');
-      try {
-        const querySnapshot = await getDocs(collection(db, "products"));
-        grid.innerHTML = '';
-
-        if (querySnapshot.empty) {
-          grid.innerHTML = '<p style="color: var(--text-muted);">No assets available yet.</p>';
-          return;
-        }
-
-        querySnapshot.forEach((docSnap) => {
-          const product = docSnap.data();
-          grid.innerHTML += `
-            <div class="card">
-              <img src="${product.imageUrl || 'https://via.placeholder.com/300'}" alt="${product.title}" style="width:100%; height:180px; object-fit:cover; border-bottom:1px solid var(--border);"/>
-              <div style="padding:16px; flex:1; display:flex; flex-direction:column;">
-                <h3 style="font-size:1rem; font-weight:700; margin-bottom:4px;">${product.title}</h3>
-                <p style="color:var(--text-muted); font-size:0.825rem; flex:1; margin-bottom:12px;">${product.description || ''}</p>
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                  <span style="font-size:1.15rem; font-weight:800; color:var(--text-main);">$${product.price}</span>
-                  <button onclick="alert('Proceeding to checkout...')" class="btn btn-primary" style="padding:6px 12px; font-size:0.8rem;">Buy Now</button>
-                </div>
-              </div>
-            </div>
-          `;
-        });
-      } catch (error) {
-        grid.innerHTML = '<p style="color: var(--danger);">Failed to load products.</p>';
-      }
-    }
-
-    loadProducts();
-  </script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>
