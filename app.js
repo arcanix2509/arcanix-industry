@@ -24,13 +24,13 @@ const routes = {
 
 const appContainer = document.getElementById('app-view');
 
-// 1. Professional E-Commerce CSS
+// 1. CSS & Layout Setup
 function injectResponsiveStyles() {
   if (document.getElementById('responsive-custom-styles')) return;
   const style = document.createElement('style');
   style.id = 'responsive-custom-styles';
   style.innerHTML = `
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: Inter, -apple-system, Roboto, meiryo, sans-serif; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: Inter, -apple-system, Roboto, sans-serif; }
     body { background-color: #f1f3f6; color: #212121; }
 
     .main-container {
@@ -39,7 +39,7 @@ function injectResponsiveStyles() {
       padding: 12px;
     }
 
-    /* Top Nav */
+    /* Sticky Navigation */
     .app-header {
       position: sticky;
       top: 0;
@@ -128,7 +128,7 @@ function injectResponsiveStyles() {
       border-radius: 10px;
     }
 
-    /* Mobile Search Strip */
+    /* Mobile Responsive Search */
     .mobile-search-strip {
       display: none;
       background: #2874f0;
@@ -144,7 +144,7 @@ function injectResponsiveStyles() {
       .main-container { padding: 16px; }
     }
 
-    /* Product Cards */
+    /* Grid Layout */
     .products-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -213,7 +213,7 @@ function injectResponsiveStyles() {
     .main-price { font-size: 1rem; font-weight: 700; color: #212121; }
     .offer-tag { font-size: 0.75rem; font-weight: 700; color: #388e3c; }
 
-    /* Drawer UI */
+    /* Side Drawer */
     .side-drawer {
       position: fixed;
       top: 0; left: -280px;
@@ -257,7 +257,7 @@ function injectResponsiveStyles() {
   document.head.appendChild(style);
 }
 
-// 2. Header Setup
+// 2. Header & Navigation Component
 function setupResponsiveHeader() {
   const oldHeader = document.getElementById('main-header');
   if (!oldHeader) {
@@ -412,7 +412,7 @@ window.deleteItemByAdmin = async (colName, id) => {
   }
 };
 
-// 1. HOME PAGE WITH CATEGORY DROPDOWN
+// 3. HOME PAGE (BANNER & CATEGORY DROPDOWN)
 async function renderHomePage() {
   appContainer.innerHTML = `
     <div id="home-slider-container" style="margin-bottom: 16px;"></div>
@@ -440,7 +440,44 @@ async function renderHomePage() {
   fetchProductsGrid(document.getElementById('home-products-grid'));
 }
 
-// Populate Homepage Category Dropdown from Firestore
+// Fetch Banner with Fallback & Image Fix
+async function fetchBanners() {
+  const container = document.getElementById('home-slider-container');
+  if (!container) return;
+  try {
+    const snap = await getDocs(collection(db, "banners"));
+    if (snap.empty) {
+      container.style.display = 'none';
+      return;
+    }
+    
+    const banners = snap.docs.map(doc => doc.data());
+    const b = banners[banners.length - 1]; 
+    
+    const fallbackImage = 'https://picsum.photos/1200/400';
+    const bannerImgUrl = b.imageUrl ? b.imageUrl.trim() : fallbackImage;
+
+    container.style.display = 'block';
+    container.innerHTML = `
+      <div style="position: relative; width: 100%; min-height: 200px; max-height: 350px; overflow: hidden; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.12); background: #e0e0e0;">
+        <img src="${bannerImgUrl}" 
+             alt="${b.title || 'Banner Image'}" 
+             onerror="this.onerror=null; this.src='${fallbackImage}';" 
+             style="width: 100%; height: 260px; object-fit: cover; display: block;" />
+        
+        <div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0, 0, 0, 0.75)); padding: 20px 24px; color: #ffffff;">
+          <h1 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 4px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">${b.title || 'Special Promotion'}</h1>
+          <p style="font-size: 0.95rem; font-weight: 600; color: #ffe500; text-shadow: 0 1px 3px rgba(0,0,0,0.5);">${b.subtitle || ''}</p>
+        </div>
+      </div>
+    `;
+  } catch(e) {
+    console.error("Banner fetch error:", e);
+    container.style.display = 'none';
+  }
+}
+
+// Populate Homepage Category Dropdown
 async function populateHomeCategoryDropdown() {
   const catSelect = document.getElementById('homepage-cat-dropdown');
   if (!catSelect) return;
@@ -460,7 +497,7 @@ async function populateHomeCategoryDropdown() {
   }
 }
 
-// Handle Homepage Category Dropdown Selection
+// Handle Category Filter Change
 window.handleHomeCategoryChange = function(selectedCat) {
   const gridTitle = document.getElementById('grid-title');
   if (gridTitle) {
@@ -469,31 +506,7 @@ window.handleHomeCategoryChange = function(selectedCat) {
   fetchProductsGrid(document.getElementById('home-products-grid'), '', selectedCat);
 };
 
-async function fetchBanners() {
-  const container = document.getElementById('home-slider-container');
-  if (!container) return;
-  try {
-    const snap = await getDocs(collection(db, "banners"));
-    if (snap.empty) {
-      container.style.display = 'none';
-      return;
-    }
-    const b = snap.docs[0].data();
-    container.style.display = 'block';
-    container.innerHTML = `
-      <div style="background-image: url('${b.imageUrl}'); background-size: cover; background-position: center; border-radius: 4px; min-height: 180px; display: flex; align-items: center; padding: 20px;">
-        <div style="background: rgba(255,255,255,0.92); padding: 16px 24px; border-radius: 4px; max-width: 500px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
-          <h1 style="font-size: 1.3rem; font-weight: 800; color: #212121; margin-bottom: 4px;">${b.title || 'Welcome'}</h1>
-          <p style="font-size: 0.85rem; color: #388e3c; font-weight: 700;">${b.subtitle || ''}</p>
-        </div>
-      </div>
-    `;
-  } catch(e) {
-    console.error("Banner fetch error:", e);
-  }
-}
-
-// 2. CATEGORY PRODUCTS PAGE (PLP)
+// 4. CATEGORY PRODUCTS PAGE (PLP)
 async function renderCategoryProductsPage(params) {
   const categoryName = params.get('category') || '';
   appContainer.innerHTML = `
@@ -505,7 +518,7 @@ async function renderCategoryProductsPage(params) {
   fetchProductsGrid(document.getElementById('plp-grid'), '', categoryName);
 }
 
-// 3. PRODUCT DETAIL PAGE (PDP)
+// 5. PRODUCT DETAIL PAGE (PDP)
 async function renderProductDetailPage(params) {
   const id = params.get('id');
   if (!id) return;
@@ -542,7 +555,7 @@ async function renderProductDetailPage(params) {
   }
 }
 
-// 4. SEARCH PAGE
+// 6. SEARCH PAGE
 function renderSearchResultsPage(params) {
   const query = params.get('q') || '';
   appContainer.innerHTML = `
@@ -554,7 +567,7 @@ function renderSearchResultsPage(params) {
   fetchProductsGrid(document.getElementById('search-grid'), query);
 }
 
-// 5. CART PAGE
+// 7. CART PAGE
 function renderCartPage() {
   if (window.cart.length === 0) {
     appContainer.innerHTML = `<div style="text-align: center; padding: 50px 16px; background:#fff; border-radius:4px; box-shadow:0 1px 2px rgba(0,0,0,0.05);"><h2>Your Shopping Cart is Empty!</h2><br/><a href="#home" style="display:inline-block; padding:12px 28px; background:#2874f0; color:#fff; text-decoration:none; border-radius:2px; font-weight:700; font-size:0.9rem;">Shop Now</a></div>`;
@@ -597,7 +610,7 @@ function renderCartPage() {
   `;
 }
 
-// 6. CHECKOUT PAGE
+// 8. CHECKOUT PAGE
 function renderCheckoutPage() {
   let total = window.cart.reduce((sum, item) => sum + item.price, 0);
   appContainer.innerHTML = `
@@ -621,7 +634,7 @@ function renderCheckoutPage() {
   };
 }
 
-// 7. ORDER CONFIRMATION
+// 9. ORDER CONFIRMATION
 function renderOrderConfirmationPage() {
   appContainer.innerHTML = `
     <div style="text-align: center; padding: 50px 16px; background:#fff; border-radius:4px; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
@@ -632,7 +645,7 @@ function renderOrderConfirmationPage() {
   `;
 }
 
-// 8. AUTHENTICATION
+// 10. AUTHENTICATION
 function renderAuthPage() {
   appContainer.innerHTML = `
     <div style="padding: 24px; background:#fff; max-width: 400px; margin: 20px auto; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.12);">
@@ -669,7 +682,7 @@ function renderAuthPage() {
   };
 }
 
-// 9. USER DASHBOARD
+// 11. USER DASHBOARD
 function renderUserDashboardPage() {
   if (!currentUser) { location.hash = 'auth'; return; }
   const isAdmin = currentUser.email && currentUser.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
@@ -687,7 +700,7 @@ function renderUserDashboardPage() {
   document.getElementById('so-btn').onclick = () => signOut(auth).then(() => location.hash = 'auth');
 }
 
-// 10. ADMIN DASHBOARD
+// 12. ADMIN DASHBOARD
 async function renderSellerDashboardPage() {
   if (!currentUser || (currentUser.email && currentUser.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase())) {
     appContainer.innerHTML = `<div style="padding:20px; background:#fff;"><h2>Access Denied</h2><p>Only authorized admin can access this page.</p></div>`;
@@ -747,7 +760,7 @@ async function renderSellerDashboardPage() {
     </div>
   `;
 
-  // Populate Dropdown for Admin Panel Product Form
+  // Dynamic Dropdown for Product Form in Admin Dashboard
   async function populateCategoryDropdown() {
     const catSelect = document.getElementById('p-category');
     if (!catSelect) return;
@@ -867,7 +880,7 @@ async function renderSellerDashboardPage() {
   }
 }
 
-// Fetch Product Grid
+// 13. DATA FETCHING (PRODUCTS GRID)
 async function fetchProductsGrid(container, searchQuery = '', categoryFilter = '') {
   try {
     const snap = await getDocs(collection(db, "products"));
