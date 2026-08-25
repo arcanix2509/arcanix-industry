@@ -3,43 +3,33 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Arcanix Cart - Digital Assets & Unity Scripts</title>
+  <title>Arcanix Market - Modern Ecommerce</title>
   <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
 
-  <!-- Flipkart Top Blue Navbar -->
+  <!-- Clean Flipkart-style Navbar -->
   <nav>
     <div class="nav-container">
       <a href="#home" class="brand-logo">
-        Arcanix <span>Explore Plus ✦</span>
+        Arcanix <span>Store ✦</span>
       </a>
       
       <div class="search-box">
-        <input type="text" id="global-search-input" placeholder="Search for Unity Assets, 3D Models, Scripts..."/>
+        <input type="text" id="global-search-input" placeholder="Search products, items, code..."/>
         <button id="search-btn">🔍</button>
       </div>
 
       <div class="nav-actions">
         <a href="#auth" id="account-nav-btn" class="nav-btn-login">Login</a>
-        <a href="#seller-register" class="nav-link-white">Become a Seller</a>
         <a href="#cart" class="nav-link-white">🛒 Cart (<span id="cart-count">0</span>)</a>
       </div>
     </div>
   </nav>
 
-  <!-- Category Icons Bar -->
-  <div class="cat-strip">
-    <div class="cat-item" onclick="location.hash='plp?category=unity'"><span class="cat-icon">🎮</span>Unity Assets</div>
-    <div class="cat-item" onclick="location.hash='plp?category=scripts'"><span class="cat-icon">💻</span>C# Scripts</div>
-    <div class="cat-item" onclick="location.hash='plp?category=3dmodels'"><span class="cat-icon">🎨</span>3D Environments</div>
-    <div class="cat-item" onclick="location.hash='plp?category=shaders'"><span class="cat-icon">⚡</span>Shaders & VFX</div>
-    <div class="cat-item" onclick="location.hash='help'"><span class="cat-icon">🎧</span>24x7 Help</div>
-  </div>
-
-  <!-- Dynamic Views Container -->
+  <!-- Main View Container -->
   <main class="container" id="app-view">
-    <!-- Router renders views here -->
+    <!-- Router injects dynamic views here -->
   </main>
 
   <script type="module" src="firebase-config.js"></script>
