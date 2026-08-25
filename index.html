@@ -3,20 +3,20 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Arcanix Market - Modern Ecommerce</title>
+  <title>Arcanix Store - Dynamic Marketplace</title>
   <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
 
-  <!-- Clean Flipkart-style Navbar -->
+  <!-- Top Navigation Bar -->
   <nav>
     <div class="nav-container">
       <a href="#home" class="brand-logo">
-        Arcanix <span>Store ✦</span>
+        Arcanix <span>Plus ✦</span>
       </a>
       
       <div class="search-box">
-        <input type="text" id="global-search-input" placeholder="Search products, items, code..."/>
+        <input type="text" id="global-search-input" placeholder="Search items, categories, products..."/>
         <button id="search-btn">🔍</button>
       </div>
 
@@ -27,9 +27,14 @@
     </div>
   </nav>
 
+  <!-- Dynamic Categories Bar (Populated by Admin) -->
+  <div class="cat-strip" id="dynamic-cat-strip">
+    <div style="font-size:0.85rem; color:#878787;">Loading categories...</div>
+  </div>
+
   <!-- Main View Container -->
   <main class="container" id="app-view">
-    <!-- Router injects dynamic views here -->
+    <!-- Dynamic Router Injector -->
   </main>
 
   <script type="module" src="firebase-config.js"></script>
