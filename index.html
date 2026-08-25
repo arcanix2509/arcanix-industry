@@ -1,54 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Arcanix Multi-Vendor Store</title>
-  <link rel="stylesheet" href="style.css"/>
-</head>
-<body>
-
-  <!-- Global Header -->
-  <nav class="main-nav">
-    <div class="nav-container">
-      <a href="#home" class="brand-logo">Arcanix <span>MARKET</span></a>
-      <div class="nav-search">
-        <input type="text" id="global-search-input" placeholder="Search products, brands, sellers..."/>
-        <button id="search-btn" class="btn btn-primary">Search</button>
-      </div>
-      <div class="nav-actions">
-        <a href="#wishlist" class="nav-link">❤️ Wishlist</a>
-        <a href="#cart" class="nav-link">🛒 Cart (<span id="cart-count">0</span>)</a>
-        <a href="#account" id="account-nav-btn" class="btn btn-outline">Sign In</a>
-      </div>
-    </div>
-  </nav>
-
-  <!-- DYNAMIC VIEW CONTAINER -->
-  <main id="app-view" class="container">
-    <!-- Active page views JavaScript dwara injection hongay -->
-  </main>
-
-  <!-- Global Footer -->
-  <footer class="main-footer">
-    <div class="footer-links">
-      <div>
-        <h4>Support & Legal</h4>
-        <a href="#help">Help Center / FAQ</a>
-        <a href="#contact">Contact Us</a>
-        <a href="#privacy">Privacy Policy</a>
-        <a href="#terms">Terms & Conditions</a>
-        <a href="#returns">Return & Refund Policy</a>
-        <a href="#shipping">Shipping & Delivery Policy</a>
-      </div>
-      <div>
-        <h4>Sell on Arcanix</h4>
-        <a href="#seller-register">Become a Seller</a>
-        <a href="#seller-dashboard">Seller Dashboard</a>
-      </div>
-    </div>
-  </footer>
-
-  <script type="module" src="app.js"></script>
-</body>
-</html>
+<script type="module">
+  document.getElementById('search-btn').addEventListener('click', () => {
+    const query = document.getElementById('global-search-input').value.trim();
+    if (query) {
+      window.location.hash = `search?q=${encodeURIComponent(query)}`;
+    }
+  });
+</script>
