@@ -412,7 +412,7 @@ window.deleteItemByAdmin = async (colName, id) => {
   }
 };
 
-// 3. HOME PAGE (BANNER & CATEGORY DROPDOWN)
+// 3. HOME PAGE (AUTO-SLIDING BANNERS & CATEGORY DROPDOWN)
 async function renderHomePage() {
   appContainer.innerHTML = `
     <div id="home-slider-container" style="margin-bottom: 16px;"></div>
@@ -440,10 +440,16 @@ async function renderHomePage() {
   fetchProductsGrid(document.getElementById('home-products-grid'));
 }
 
-// Fetch Banner with Fallback & Image Fix
+// Auto-Sliding Hero Banners Engine
+let bannerTimer = null;
+let currentBannerIndex = 0;
+
 async function fetchBanners() {
   const container = document.getElementById('home-slider-container');
   if (!container) return;
+  
+  if (bannerTimer) clearInterval(bannerTimer);
+
   try {
     const snap = await getDocs(collection(db, "banners"));
     if (snap.empty) {
@@ -452,29 +458,78 @@ async function fetchBanners() {
     }
     
     const banners = snap.docs.map(doc => doc.data());
-    const b = banners[banners.length - 1]; 
-    
     const fallbackImage = 'https://picsum.photos/1200/400';
-    const bannerImgUrl = b.imageUrl ? b.imageUrl.trim() : fallbackImage;
-
+    
     container.style.display = 'block';
+    
     container.innerHTML = `
-      <div style="position: relative; width: 100%; min-height: 200px; max-height: 350px; overflow: hidden; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.12); background: #e0e0e0;">
-        <img src="${bannerImgUrl}" 
-             alt="${b.title || 'Banner Image'}" 
-             onerror="this.onerror=null; this.src='${fallbackImage}';" 
-             style="width: 100%; height: 260px; object-fit: cover; display: block;" />
+      <div id="hero-slider" style="position: relative; width: 100%; min-height: 220px; max-height: 350px; overflow: hidden; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.12); background: #e0e0e0;">
         
-        <div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0, 0, 0, 0.75)); padding: 20px 24px; color: #ffffff;">
-          <h1 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 4px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">${b.title || 'Special Promotion'}</h1>
-          <p style="font-size: 0.95rem; font-weight: 600; color: #ffe500; text-shadow: 0 1px 3px rgba(0,0,0,0.5);">${b.subtitle || ''}</p>
+        <!-- Slides Wrapper -->
+        <div id="slider-track" style="display: flex; transition: transform 0.5s ease-in-out; width: 100%; height: 100%;">
+          ${banners.map((b) => `
+            <div style="min-width: 100%; position: relative; height: 260px;">
+              <img src="${b.imageUrl ? b.imageUrl.trim() : fallbackImage}" 
+                   alt="${b.title || 'Banner Image'}" 
+                   onerror="this.onerror=null; this.src='${fallbackImage}';" 
+                   style="width: 100%; height: 100%; object-fit: cover; display: block;" />
+              
+              <div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0, 0, 0, 0.75)); padding: 20px 24px; color: #ffffff;">
+                <h1 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 4px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">${b.title || 'Special Offer'}</h1>
+                <p style="font-size: 0.95rem; font-weight: 600; color: #ffe500; text-shadow: 0 1px 3px rgba(0,0,0,0.5);">${b.subtitle || ''}</p>
+              </div>
+            </div>
+          `).join('')}
         </div>
+
+        <!-- Controls -->
+        <button onclick="changeSlide(-1, ${banners.length})" style="position: absolute; top: 50%; left: 10px; transform: translateY(-50%); background: rgba(0,0,0,0.4); color: #fff; border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; z-index: 10;">❮</button>
+        <button onclick="changeSlide(1, ${banners.length})" style="position: absolute; top: 50%; right: 10px; transform: translateY(-50%); background: rgba(0,0,0,0.4); color: #fff; border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; z-index: 10;">❯</button>
+
+        <!-- Dots Indicator -->
+        <div id="slider-dots" style="position: absolute; bottom: 10px; right: 20px; display: flex; gap: 6px; z-index: 10;">
+          ${banners.map((_, i) => `
+            <span onclick="goToSlide(${i})" class="slider-dot" style="width: 8px; height: 8px; border-radius: 50%; background: ${i === 0 ? '#fff' : 'rgba(255,255,255,0.5)'}; cursor: pointer;"></span>
+          `).join('')}
+        </div>
+
       </div>
     `;
+
+    currentBannerIndex = 0;
+    
+    // Auto Slide every 3.5s
+    bannerTimer = setInterval(() => {
+      changeSlide(1, banners.length);
+    }, 3500);
+
   } catch(e) {
     console.error("Banner fetch error:", e);
     container.style.display = 'none';
   }
+}
+
+window.changeSlide = function(direction, totalBanners) {
+  currentBannerIndex = (currentBannerIndex + direction + totalBanners) % totalBanners;
+  updateSliderPosition();
+};
+
+window.goToSlide = function(index) {
+  currentBannerIndex = index;
+  updateSliderPosition();
+};
+
+function updateSliderPosition() {
+  const track = document.getElementById('slider-track');
+  const dots = document.querySelectorAll('.slider-dot');
+  
+  if (track) {
+    track.style.transform = `translateX(-${currentBannerIndex * 100}%)`;
+  }
+  
+  dots.forEach((dot, idx) => {
+    dot.style.background = idx === currentBannerIndex ? '#fff' : 'rgba(255,255,255,0.5)';
+  });
 }
 
 // Populate Homepage Category Dropdown
@@ -700,7 +755,7 @@ function renderUserDashboardPage() {
   document.getElementById('so-btn').onclick = () => signOut(auth).then(() => location.hash = 'auth');
 }
 
-// 12. ADMIN DASHBOARD
+// 12. ADMIN DASHBOARD (MANAGIBILITY FOR BANNERS & PRODUCTS)
 async function renderSellerDashboardPage() {
   if (!currentUser || (currentUser.email && currentUser.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase())) {
     appContainer.innerHTML = `<div style="padding:20px; background:#fff;"><h2>Access Denied</h2><p>Only authorized admin can access this page.</p></div>`;
@@ -754,7 +809,11 @@ async function renderSellerDashboardPage() {
         <button type="submit" style="width:100%; padding:10px; background:#fb641b; color:#fff; border:none; border-radius:2px; font-weight:700; cursor:pointer;">PUBLISH PRODUCT NOW</button>
       </form>
 
-      <!-- SECTION D: Manage Live Products -->
+      <!-- SECTION D: Manage Live Banners -->
+      <h4 style="margin-bottom: 12px; margin-top: 24px;">Manage Live Hero Banners</h4>
+      <div id="admin-banners-list" style="overflow-x: auto; margin-bottom: 24px;"></div>
+
+      <!-- SECTION E: Manage Live Products -->
       <h4 style="margin-bottom: 12px;">Manage Live Products</h4>
       <div id="admin-items-list" style="overflow-x: auto;"></div>
     </div>
@@ -783,6 +842,7 @@ async function renderSellerDashboardPage() {
 
   await populateCategoryDropdown();
 
+  // Form Handlers
   document.getElementById('admin-cat-form').onsubmit = async (e) => {
     e.preventDefault();
     const submitBtn = document.getElementById('c-submit-btn');
@@ -823,7 +883,7 @@ async function renderSellerDashboardPage() {
       });
       alert("Banner saved!");
       document.getElementById('admin-banner-form').reset();
-      fetchBanners();
+      renderSellerDashboardPage();
     } catch(err) {
       alert("Error adding banner: " + err.message);
     }
@@ -849,6 +909,37 @@ async function renderSellerDashboardPage() {
     }
   };
 
+  // Render Admin Banners Table
+  const bannersContainer = document.getElementById('admin-banners-list');
+  try {
+    const bannerSnap = await getDocs(collection(db, "banners"));
+    if (bannerSnap.empty) {
+      bannersContainer.innerHTML = '<p style="color:#878787;">No banners active.</p>';
+    } else {
+      bannersContainer.innerHTML = `
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+          <thead><tr style="border-bottom: 2px solid #e0e0e0; text-align:left;"><th style="padding:10px;">Preview</th><th style="padding:10px;">Title</th><th style="padding:10px;">Subtitle</th><th style="padding:10px;">Action</th></tr></thead>
+          <tbody>
+            ${bannerSnap.docs.map(docSnap => {
+              const b = docSnap.data();
+              return `
+                <tr style="border-bottom: 1px solid #eee;">
+                  <td style="padding:8px;"><img src="${b.imageUrl}" style="width: 80px; height: 45px; object-fit: cover; border-radius: 4px;"/></td>
+                  <td style="padding:8px;"><b>${b.title || 'N/A'}</b></td>
+                  <td style="padding:8px;">${b.subtitle || '-'}</td>
+                  <td style="padding:8px;"><button onclick="deleteItemByAdmin('banners', '${docSnap.id}')" style="background:#d32f2f; color:#fff; border:none; padding:4px 10px; border-radius:2px; cursor:pointer;">Delete</button></td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+  } catch(err) {
+    bannersContainer.innerHTML = '<p>Error loading banners list.</p>';
+  }
+
+  // Render Admin Products Table
   const itemsContainer = document.getElementById('admin-items-list');
   try {
     const prodSnap = await getDocs(collection(db, "products"));
