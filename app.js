@@ -82,7 +82,7 @@ function injectResponsiveStyles() {
     }
     .brand-logo span { color: #ffe500; font-style: normal; }
 
-    /* Integrated Desktop & Mobile Search Bar */
+    /* Search Box */
     .header-search-box {
       flex: 1;
       max-width: 600px;
@@ -132,14 +132,13 @@ function injectResponsiveStyles() {
       border-radius: 10px;
     }
 
-    /* Mobile Search Bar Strip (Visible Always on Mobile) */
+    /* Mobile Search Strip */
     .mobile-search-strip {
       display: none;
       background: #2874f0;
       padding: 0 12px 10px 12px;
     }
 
-    /* Breakpoint Logic for Search Bar Visibility */
     @media (max-width: 767px) {
       .desktop-search { display: none !important; }
       .mobile-search-strip { display: block !important; }
@@ -149,7 +148,7 @@ function injectResponsiveStyles() {
       .main-container { padding: 16px; }
     }
 
-    /* Categories Strip (Flipkart Style Icon Row) */
+    /* Categories Strip */
     .cat-strip-container {
       display: flex;
       overflow-x: auto;
@@ -183,7 +182,7 @@ function injectResponsiveStyles() {
       margin-bottom: 6px;
     }
 
-    /* Amazon/Flipkart Professional Card Design */
+    /* Product Cards */
     .products-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -252,7 +251,7 @@ function injectResponsiveStyles() {
     .main-price { font-size: 1rem; font-weight: 700; color: #212121; }
     .offer-tag { font-size: 0.75rem; font-weight: 700; color: #388e3c; }
 
-    /* Drawer Styles */
+    /* Drawer UI */
     .side-drawer {
       position: fixed;
       top: 0; left: -280px;
@@ -296,7 +295,7 @@ function injectResponsiveStyles() {
   document.head.appendChild(style);
 }
 
-// 2. Persistent Responsive Header Setup
+// 2. Persistent Header Setup
 function setupResponsiveHeader() {
   const oldHeader = document.getElementById('main-header');
   if (!oldHeader) {
@@ -310,7 +309,6 @@ function setupResponsiveHeader() {
           <a href="#home" class="brand-logo">Arcanix <span>Plus</span></a>
         </div>
 
-        <!-- Desktop Search Bar -->
         <div class="header-search-box desktop-search">
           <input type="text" id="desktop-search-input" placeholder="Search for products, brands and more..." onkeydown="handleSearch(event, 'desktop-search-input')"/>
           <button onclick="triggerSearch('desktop-search-input')">🔍</button>
@@ -326,7 +324,6 @@ function setupResponsiveHeader() {
         </div>
       </div>
 
-      <!-- Mobile Permanent Search Bar Strip -->
       <div class="mobile-search-strip">
         <div class="header-search-box" style="max-width: 100%;">
           <input type="text" id="mobile-search-input" placeholder="Search products, brands and more..." onkeydown="handleSearch(event, 'mobile-search-input')"/>
@@ -429,7 +426,7 @@ function updateCartBadge() {
   if (badge) badge.innerText = window.cart.length;
 }
 
-// Horizontal Scrollable Category Bar (Icon Circle UI)
+// Category Bar UI
 async function loadDynamicCategoriesStrip() {
   let strip = document.getElementById('dynamic-cat-strip');
   if (!strip) {
@@ -666,7 +663,7 @@ function renderOrderConfirmationPage() {
   `;
 }
 
-// 8. AUTHENTICATION (Google Login Refresh Fix Included)
+// 8. AUTHENTICATION
 function renderAuthPage() {
   appContainer.innerHTML = `
     <div style="padding: 24px; background:#fff; max-width: 400px; margin: 20px auto; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.12);">
@@ -703,7 +700,7 @@ function renderAuthPage() {
   };
 }
 
-// 9. USER ACCOUNT & ADMIN ACCESS
+// 9. USER DASHBOARD
 function renderUserDashboardPage() {
   if (!currentUser) { location.hash = 'auth'; return; }
   const isAdmin = currentUser.email && currentUser.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
@@ -721,7 +718,7 @@ function renderUserDashboardPage() {
   document.getElementById('so-btn').onclick = () => signOut(auth).then(() => location.hash = 'auth');
 }
 
-// 10. ADMIN DASHBOARD (CMS)
+// 10. ADMIN DASHBOARD WITH DYNAMIC CATEGORY DROPDOWN
 async function renderSellerDashboardPage() {
   if (!currentUser || (currentUser.email && currentUser.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase())) {
     appContainer.innerHTML = `<div style="padding:20px; background:#fff;"><h2>Access Denied</h2><p>Only authorized admin can access this page.</p></div>`;
@@ -746,7 +743,7 @@ async function renderSellerDashboardPage() {
 
         <!-- SECTION B: Add Category -->
         <form id="admin-cat-form" style="flex: 1 1 300px; background: #fafafa; padding: 16px; border: 1px solid #eee; border-radius: 4px;">
-          <h4 style="margin-bottom: 12px;">2. Add Category</h4>
+          <h4 style="margin-bottom: 12px;">2. Add New Category</h4>
           <div style="margin-bottom:8px;"><label style="font-size:0.8rem;">Category Name</label><input type="text" id="c-name" required placeholder="Electronics" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:2px;"/></div>
           <div style="margin-bottom:12px;"><label style="font-size:0.8rem;">Icon Emoji</label><input type="text" id="c-icon" placeholder="⚡" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:2px;"/></div>
           <button type="submit" id="c-submit-btn" style="width:100%; padding:8px; background:#2874f0; color:#fff; border:none; border-radius:2px; font-weight:700; cursor:pointer;">Save Category</button>
@@ -754,17 +751,19 @@ async function renderSellerDashboardPage() {
 
       </div>
 
-      <!-- SECTION C: Add Product -->
+      <!-- SECTION C: Add Product (Uses Dynamic Dropdown for Categories) -->
       <form id="seller-add-form" style="background: #fafafa; padding: 16px; border: 1px solid #eee; border-radius: 4px; margin-bottom: 24px;">
         <h4 style="margin-bottom: 12px;">3. Publish New Product</h4>
         <div style="display: flex; flex-wrap: wrap; gap: 12px;">
           <div style="flex: 1 1 200px; margin-bottom:8px;"><label style="font-size:0.8rem;">Title</label><input type="text" id="p-title" required placeholder="Headphones" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:2px;"/></div>
+          
           <div style="flex: 1 1 200px; margin-bottom:8px;">
-            <label style="font-size:0.8rem;">Category</label>
-            <select id="p-category" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius:2px;">
+            <label style="font-size:0.8rem;">Select Category</label>
+            <select id="p-category" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius:2px; background:#fff; font-size:0.85rem;">
               <option value="General">General</option>
             </select>
           </div>
+
           <div style="flex: 1 1 200px; margin-bottom:8px;"><label style="font-size:0.8rem;">Price ($)</label><input type="number" step="0.01" id="p-price" required placeholder="49.99" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:2px;"/></div>
           <div style="flex: 1 1 200px; margin-bottom:8px;"><label style="font-size:0.8rem;">Offer Tag</label><input type="text" id="p-tag" placeholder="Hot Deal" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:2px;"/></div>
           <div style="flex: 1 1 100%; margin-bottom:8px;"><label style="font-size:0.8rem;">Image URL</label><input type="url" id="p-image" required placeholder="https://..." style="width:100%; padding:6px; border:1px solid #ccc; border-radius:2px;"/></div>
@@ -779,6 +778,7 @@ async function renderSellerDashboardPage() {
     </div>
   `;
 
+  // Dynamically Populate Dropdown Options from Firestore Categories
   async function populateCategoryDropdown() {
     const catSelect = document.getElementById('p-category');
     if (!catSelect) return;
