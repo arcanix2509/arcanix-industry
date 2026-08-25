@@ -3,34 +3,45 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Arcanix Market - Digital Assets & Code Marketplace</title>
+  <title>Arcanix Cart - Digital Assets & Unity Scripts</title>
   <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
 
-  <!-- Top Sticky Navigation Bar -->
+  <!-- Flipkart Top Blue Navbar -->
   <nav>
     <div class="nav-container">
-      <a href="#home" class="brand-logo">Arcanix <span>Market</span></a>
+      <a href="#home" class="brand-logo">
+        Arcanix <span>Explore Plus ✦</span>
+      </a>
       
-      <div style="display: flex; gap: 8px; align-items: center;">
-        <input type="text" id="global-search-input" placeholder="Search assets..." style="padding: 6px 12px; border-radius: var(--radius-md); border: 1px solid var(--border); font-size: 0.875rem;"/>
-        <button id="search-btn" class="btn btn-outline" style="padding: 6px 12px;">🔍</button>
+      <div class="search-box">
+        <input type="text" id="global-search-input" placeholder="Search for Unity Assets, 3D Models, Scripts..."/>
+        <button id="search-btn">🔍</button>
       </div>
 
       <div class="nav-actions">
-        <a href="#cart" class="btn btn-outline">🛒 Cart (<span id="cart-count">0</span>)</a>
-        <a href="#auth" id="account-nav-btn" class="btn btn-primary">Sign In</a>
+        <a href="#auth" id="account-nav-btn" class="nav-btn-login">Login</a>
+        <a href="#seller-register" class="nav-link-white">Become a Seller</a>
+        <a href="#cart" class="nav-link-white">🛒 Cart (<span id="cart-count">0</span>)</a>
       </div>
     </div>
   </nav>
 
+  <!-- Category Icons Bar -->
+  <div class="cat-strip">
+    <div class="cat-item" onclick="location.hash='plp?category=unity'"><span class="cat-icon">🎮</span>Unity Assets</div>
+    <div class="cat-item" onclick="location.hash='plp?category=scripts'"><span class="cat-icon">💻</span>C# Scripts</div>
+    <div class="cat-item" onclick="location.hash='plp?category=3dmodels'"><span class="cat-icon">🎨</span>3D Environments</div>
+    <div class="cat-item" onclick="location.hash='plp?category=shaders'"><span class="cat-icon">⚡</span>Shaders & VFX</div>
+    <div class="cat-item" onclick="location.hash='help'"><span class="cat-icon">🎧</span>24x7 Help</div>
+  </div>
+
   <!-- Dynamic Views Container -->
   <main class="container" id="app-view">
-    <!-- Router injects views here -->
+    <!-- Router renders views here -->
   </main>
 
-  <!-- Global Scripts -->
   <script type="module" src="firebase-config.js"></script>
   <script type="module" src="app.js"></script>
   <script type="module">
