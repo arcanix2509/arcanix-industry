@@ -24,7 +24,162 @@ const routes = {
 
 const appContainer = document.getElementById('app-view');
 
+// Dynamic Mobile CSS Injection
+function injectMobileStyles() {
+  if (document.getElementById('mobile-custom-styles')) return;
+  const style = document.createElement('style');
+  style.id = 'mobile-custom-styles';
+  style.innerHTML = `
+    /* Mobile-first base layout adjustments */
+    body {
+      padding-bottom: 70px !important; /* Space for Mobile Bottom Nav */
+    }
+    .grid {
+      display: grid !important;
+      grid-template-columns: repeat(2, 1fr) !important;
+      gap: 10px !important;
+    }
+    @media (min-width: 768px) {
+      .grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)) !important;
+        gap: 16px !important;
+      }
+    }
+    
+    /* Horizontal Scrollable Mobile Categories Strip */
+    .cat-strip-container {
+      display: flex !important;
+      overflow-x: auto !important;
+      white-space: nowrap !important;
+      padding: 8px 12px !important;
+      gap: 12px !important;
+      background: #fff !important;
+      border-bottom: 1px solid #eee !important;
+      -webkit-overflow-scrolling: touch;
+    }
+    .cat-strip-container::-webkit-scrollbar {
+      display: none;
+    }
+    .cat-item {
+      display: inline-flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      font-size: 0.75rem !important;
+      min-width: 60px !important;
+      cursor: pointer;
+    }
+    .cat-icon {
+      font-size: 1.5rem !important;
+      margin-bottom: 4px !important;
+    }
+
+    /* Product Cards Mobile Optimization */
+    .card {
+      border: 1px solid #eee !important;
+      border-radius: 8px !important;
+      padding: 8px !important;
+      background: #fff !important;
+    }
+    .card-img {
+      width: 100% !important;
+      height: 140px !important;
+      object-fit: cover !important;
+      border-radius: 4px !important;
+    }
+
+    /* PDP Grid Mobile Responsive Stack */
+    .pdp-container {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 16px !important;
+    }
+    @media (min-width: 768px) {
+      .pdp-container {
+        display: grid !important;
+        grid-template-columns: 360px 1fr !important;
+        gap: 32px !important;
+      }
+    }
+
+    /* Cart / Checkout Mobile Responsiveness */
+    .cart-layout {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 16px !important;
+    }
+    @media (min-width: 768px) {
+      .cart-layout {
+        display: grid !important;
+        grid-template-columns: 1fr 340px !important;
+      }
+    }
+
+    /* Admin Dashboard Responsive Grid */
+    .admin-grid {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 16px !important;
+    }
+    @media (min-width: 768px) {
+      .admin-grid {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+      }
+    }
+
+    /* Fixed Bottom Navigation Bar for Mobile */
+    .mobile-bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: #ffffff;
+      border-top: 1px solid #e0e0e0;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 9999;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+    }
+    @media (min-width: 768px) {
+      .mobile-bottom-nav {
+        display: none;
+      }
+    }
+    .mobile-nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: #666;
+      text-decoration: none;
+      font-size: 0.7rem;
+    }
+    .mobile-nav-item.active {
+      color: #2874f0;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+function renderBottomNav() {
+  if (document.getElementById('mobile-bottom-nav')) return;
+  const nav = document.createElement('div');
+  nav.id = 'mobile-bottom-nav';
+  nav.className = 'mobile-bottom-nav';
+  nav.innerHTML = `
+    <a href="#home" class="mobile-nav-item"><span>🏠</span><span>Home</span></a>
+    <a href="#search" class="mobile-nav-item"><span>🔍</span><span>Search</span></a>
+    <a href="#cart" class="mobile-nav-item"><span>🛒</span><span>Cart</span></a>
+    <a href="#account" class="mobile-nav-item"><span>👤</span><span>Account</span></a>
+  `;
+  document.body.appendChild(nav);
+}
+
 function navigate() {
+  injectMobileStyles();
+  renderBottomNav();
+
   const fullHash = window.location.hash.replace('#', '') || 'home';
   const [route, queryString] = fullHash.split('?');
   const params = new URLSearchParams(queryString);
@@ -57,10 +212,12 @@ function updateCartBadge() {
   if (badge) badge.innerText = window.cart.length;
 }
 
-// Global Category Strip Loader (Firebase Firestore Connected)
+// Global Category Strip Loader (Firebase Firestore Connected & Mobile Scrollable)
 async function loadDynamicCategoriesStrip() {
   const strip = document.getElementById('dynamic-cat-strip');
   if (!strip) return;
+  strip.className = 'cat-strip-container';
+
   try {
     const snap = await getDocs(collection(db, "categories"));
     if (snap.empty) {
@@ -68,12 +225,12 @@ async function loadDynamicCategoriesStrip() {
       return;
     }
     strip.innerHTML = `
-      <div class="cat-item" onclick="location.hash='home'"><span class="cat-icon">🏠</span>All</div>
+      <div class="cat-item" onclick="location.hash='home'"><span class="cat-icon">🏠</span><span>All</span></div>
       ${snap.docs.map(docSnap => {
         const c = docSnap.data();
         return `
           <div class="cat-item" onclick="location.hash='plp?category=${encodeURIComponent(c.name)}'">
-            <span class="cat-icon">${c.icon || '📦'}</span>${c.name}
+            <span class="cat-icon">${c.icon || '📦'}</span><span>${c.name}</span>
           </div>
         `;
       }).join('')}
@@ -111,10 +268,10 @@ window.deleteItemByAdmin = async (colName, id) => {
 // 1. HOME PAGE
 async function renderHomePage() {
   appContainer.innerHTML = `
-    <div id="home-slider-container" style="margin-bottom: 20px;"></div>
-    <div class="section-card">
-      <div class="section-title">
-        <span>Featured Products</span>
+    <div id="home-slider-container" style="margin-bottom: 16px;"></div>
+    <div class="section-card" style="padding: 12px;">
+      <div class="section-title" style="margin-bottom: 12px;">
+        <span style="font-size: 1.1rem; font-weight: 700;">Featured Products</span>
       </div>
       <div class="grid" id="home-products-grid"><p style="color: var(--text-muted);">Loading products...</p></div>
     </div>
@@ -130,10 +287,10 @@ async function fetchBanners() {
     if (snap.empty) return;
     const b = snap.docs[0].data();
     container.innerHTML = `
-      <div style="background: linear-gradient(90deg, #1e3c72, #2a5298); color: white; padding: 40px; border-radius: 4px; text-align: center; background-image: url('${b.imageUrl}'); background-size: cover; background-position: center;">
-        <div style="background: rgba(0,0,0,0.5); padding: 20px; border-radius: 4px; display: inline-block;">
-          <h1 style="font-size: 2rem; font-weight: 800; margin-bottom: 8px;">${b.title}</h1>
-          <p>${b.subtitle || ''}</p>
+      <div style="background: linear-gradient(90deg, #1e3c72, #2a5298); color: white; padding: 24px 16px; border-radius: 8px; text-align: center; background-image: url('${b.imageUrl}'); background-size: cover; background-position: center;">
+        <div style="background: rgba(0,0,0,0.5); padding: 12px; border-radius: 6px; display: inline-block; width: 100%;">
+          <h1 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 4px;">${b.title}</h1>
+          <p style="font-size: 0.85rem;">${b.subtitle || ''}</p>
         </div>
       </div>
     `;
@@ -144,8 +301,8 @@ async function fetchBanners() {
 async function renderCategoryProductsPage(params) {
   const categoryName = params.get('category') || '';
   appContainer.innerHTML = `
-    <div class="section-card">
-      <h2 style="font-size: 1.3rem; margin-bottom: 16px;">Category: ${categoryName}</h2>
+    <div class="section-card" style="padding: 12px;">
+      <h2 style="font-size: 1.1rem; margin-bottom: 12px;">Category: ${categoryName}</h2>
       <div class="grid" id="plp-grid"><p style="color: var(--text-muted);">Loading products...</p></div>
     </div>
   `;
@@ -163,24 +320,24 @@ async function renderProductDetailPage(params) {
     const p = snap.data();
 
     appContainer.innerHTML = `
-      <div class="section-card" style="display: grid; grid-template-columns: 360px 1fr; gap: 32px;">
+      <div class="section-card pdp-container" style="padding: 16px;">
         <div>
-          <img src="${p.imageUrl || 'https://via.placeholder.com/400'}" style="width: 100%; border: 1px solid var(--border); border-radius: 4px; max-height: 380px; object-fit: cover; margin-bottom: 16px;"/>
-          <div style="display: flex; gap: 12px;">
-            <button onclick="addToCart('${id}', '${p.title}', ${p.price}, '${p.imageUrl}')" class="btn btn-fk-yellow" style="flex: 1;">ADD TO CART</button>
-            <button onclick="addToCart('${id}', '${p.title}', ${p.price}, '${p.imageUrl}'); location.hash='checkout';" class="btn btn-fk-orange" style="flex: 1;">BUY NOW</button>
+          <img src="${p.imageUrl || 'https://via.placeholder.com/400'}" style="width: 100%; border: 1px solid var(--border); border-radius: 8px; max-height: 300px; object-fit: cover; margin-bottom: 16px;"/>
+          <div style="display: flex; gap: 8px;">
+            <button onclick="addToCart('${id}', '${p.title}', ${p.price}, '${p.imageUrl}')" class="btn btn-fk-yellow" style="flex: 1; padding: 12px 8px; font-size: 0.9rem;">ADD TO CART</button>
+            <button onclick="addToCart('${id}', '${p.title}', ${p.price}, '${p.imageUrl}'); location.hash='checkout';" class="btn btn-fk-orange" style="flex: 1; padding: 12px 8px; font-size: 0.9rem;">BUY NOW</button>
           </div>
         </div>
         <div>
-          <h1 style="font-size: 1.5rem; font-weight: 600; margin-bottom: 8px;">${p.title}</h1>
-          <div style="font-size:0.85rem; color:var(--fk-blue); font-weight:600; margin-bottom:8px;">Category: ${p.category || 'General'}</div>
-          <div class="badge-rating" style="margin-bottom: 12px;">4.5 ★</div>
-          <div style="margin-bottom: 16px;">
-            <span class="price-main">$${p.price}</span>
+          <h1 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 6px;">${p.title}</h1>
+          <div style="font-size:0.8rem; color:var(--fk-blue); font-weight:600; margin-bottom:8px;">Category: ${p.category || 'General'}</div>
+          <div class="badge-rating" style="margin-bottom: 10px;">4.5 ★</div>
+          <div style="margin-bottom: 12px;">
+            <span class="price-main" style="font-size: 1.3rem;">$${p.price}</span>
             ${p.tag ? `<span class="discount-tag">${p.tag}</span>` : ''}
           </div>
-          <h4 style="margin-bottom: 8px;">Item Description:</h4>
-          <p style="color: #555; font-size: 0.95rem; line-height: 1.6; white-space: pre-line;">${p.description || 'No description provided.'}</p>
+          <h4 style="margin-bottom: 6px; font-size: 0.95rem;">Description:</h4>
+          <p style="color: #555; font-size: 0.85rem; line-height: 1.5; white-space: pre-line;">${p.description || 'No description provided.'}</p>
         </div>
       </div>
     `;
@@ -193,9 +350,9 @@ async function renderProductDetailPage(params) {
 function renderSearchResultsPage(params) {
   const query = params.get('q') || '';
   appContainer.innerHTML = `
-    <div class="section-card">
-      <h2>Search Results for "${query}"</h2>
-      <div class="grid" id="search-grid" style="margin-top: 16px;"></div>
+    <div class="section-card" style="padding: 12px;">
+      <h2 style="font-size: 1.1rem;">Search Results for "${query}"</h2>
+      <div class="grid" id="search-grid" style="margin-top: 12px;"></div>
     </div>
   `;
   fetchProductsGrid(document.getElementById('search-grid'), query);
@@ -204,29 +361,29 @@ function renderSearchResultsPage(params) {
 // 5. CART PAGE
 function renderCartPage() {
   if (window.cart.length === 0) {
-    appContainer.innerHTML = `<div class="section-card" style="text-align: center; padding: 40px;"><h2>Your Shopping Cart is Empty!</h2><br/><a href="#home" class="btn btn-fk-orange">Shop Now</a></div>`;
+    appContainer.innerHTML = `<div class="section-card" style="text-align: center; padding: 40px 16px;"><h2>Cart is Empty!</h2><br/><a href="#home" class="btn btn-fk-orange">Shop Now</a></div>`;
     return;
   }
   let total = window.cart.reduce((sum, item) => sum + item.price, 0);
 
   appContainer.innerHTML = `
-    <div style="display: grid; grid-template-columns: 1fr 340px; gap: 16px;">
-      <div class="section-card">
-        <h3 style="margin-bottom: 16px;">My Cart (${window.cart.length})</h3>
+    <div class="cart-layout">
+      <div class="section-card" style="padding: 12px;">
+        <h3 style="margin-bottom: 12px; font-size: 1.1rem;">My Cart (${window.cart.length})</h3>
         ${window.cart.map((item, idx) => `
-          <div style="display: flex; gap: 16px; padding: 16px 0; border-top: 1px solid var(--border);">
-            <img src="${item.image}" style="width: 80px; height: 80px; object-fit: cover;"/>
+          <div style="display: flex; gap: 12px; padding: 12px 0; border-top: 1px solid var(--border); align-items: center;">
+            <img src="${item.image}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px;"/>
             <div style="flex: 1;">
-              <h4>${item.title}</h4>
-              <div style="margin-top: 8px;"><span class="price-main">$${item.price}</span></div>
+              <h4 style="font-size: 0.9rem; margin-bottom: 4px;">${item.title}</h4>
+              <div><span class="price-main" style="font-size: 0.95rem;">$${item.price}</span></div>
             </div>
-            <button onclick="removeFromCart(${idx})" class="btn" style="color: #d32f2f; font-size: 0.9rem;">REMOVE</button>
+            <button onclick="removeFromCart(${idx})" class="btn" style="color: #d32f2f; font-size: 0.8rem; padding: 4px 8px;">REMOVE</button>
           </div>
         `).join('')}
       </div>
-      <div class="section-card" style="height: fit-content;">
-        <h4 style="color: var(--text-muted); border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 12px;">PRICE DETAILS</h4>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+      <div class="section-card" style="height: fit-content; padding: 16px;">
+        <h4 style="color: var(--text-muted); border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 12px; font-size: 0.9rem;">PRICE DETAILS</h4>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.85rem;">
           <span>Items (${window.cart.length})</span>
           <span>$${total.toFixed(2)}</span>
         </div>
@@ -244,14 +401,14 @@ function renderCartPage() {
 function renderCheckoutPage() {
   let total = window.cart.reduce((sum, item) => sum + item.price, 0);
   appContainer.innerHTML = `
-    <div class="form-card">
-      <h2 style="margin-bottom: 20px; font-size: 1.2rem;">Complete Payment ($${total.toFixed(2)})</h2>
+    <div class="form-card" style="padding: 16px;">
+      <h2 style="margin-bottom: 16px; font-size: 1.1rem;">Checkout ($${total.toFixed(2)})</h2>
       <form id="checkout-form">
-        <div class="form-group"><label>Delivery / Contact Details</label><textarea required placeholder="Enter Address or Contact Info"></textarea></div>
+        <div class="form-group"><label>Delivery / Address</label><textarea required placeholder="Address..." style="width:100%; height:70px;"></textarea></div>
         <div class="form-group"><label>Payment Method</label>
-          <select><option>UPI / NetBanking</option><option>Credit/Debit Card</option><option>Cash on Delivery</option></select>
+          <select style="width:100%; padding:8px;"><option>UPI / NetBanking</option><option>Credit/Debit Card</option><option>Cash on Delivery</option></select>
         </div>
-        <button type="submit" class="btn btn-fk-orange" style="width: 100%;">CONFIRM ORDER</button>
+        <button type="submit" class="btn btn-fk-orange" style="width: 100%; padding: 12px;">CONFIRM ORDER</button>
       </form>
     </div>
   `;
@@ -267,9 +424,9 @@ function renderCheckoutPage() {
 // 7. ORDER CONFIRMATION
 function renderOrderConfirmationPage() {
   appContainer.innerHTML = `
-    <div class="section-card" style="text-align: center; padding: 40px;">
-      <h1 style="color: var(--green-success);">🎉 Order Successfully Placed!</h1>
-      <p style="margin: 12px 0;">Thank you for shopping with us.</p>
+    <div class="section-card" style="text-align: center; padding: 32px 16px;">
+      <h2 style="color: var(--green-success); font-size: 1.3rem;">🎉 Order Confirmed!</h2>
+      <p style="margin: 12px 0 20px 0; font-size: 0.85rem;">Thank you for shopping with us.</p>
       <a href="#home" class="btn btn-fk-yellow">Continue Shopping</a>
     </div>
   `;
@@ -278,13 +435,13 @@ function renderOrderConfirmationPage() {
 // 8. AUTHENTICATION
 function renderAuthPage() {
   appContainer.innerHTML = `
-    <div class="form-card">
-      <h2 style="text-align: center; margin-bottom: 20px;">Account Login</h2>
-      <button id="google-login-btn" class="btn btn-outline" style="width: 100%; margin-bottom: 16px;">Continue with Google</button>
+    <div class="form-card" style="padding: 16px;">
+      <h2 style="text-align: center; margin-bottom: 16px; font-size: 1.2rem;">Account Login</h2>
+      <button id="google-login-btn" class="btn btn-outline" style="width: 100%; margin-bottom: 16px; padding: 10px;">Continue with Google</button>
       <form id="email-form">
-        <div class="form-group"><label>Email Address</label><input type="email" id="a-email" required/></div>
-        <div class="form-group"><label>Password</label><input type="password" id="a-pass" required/></div>
-        <button type="submit" class="btn btn-fk-orange" style="width: 100%;">Login</button>
+        <div class="form-group"><label>Email Address</label><input type="email" id="a-email" required style="width:100%; padding:8px;"/></div>
+        <div class="form-group"><label>Password</label><input type="password" id="a-pass" required style="width:100%; padding:8px;"/></div>
+        <button type="submit" class="btn btn-fk-orange" style="width: 100%; padding: 10px;">Login</button>
       </form>
     </div>
   `;
@@ -303,76 +460,75 @@ function renderUserDashboardPage() {
   const isAdmin = currentUser.email && currentUser.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
   
   appContainer.innerHTML = `
-    <div class="section-card" style="max-width: 600px; margin: 0 auto; text-align: center;">
-      <h2>User Profile</h2>
-      <p style="color: var(--text-muted); margin: 8px 0 20px 0;">${currentUser.email}</p>
-      <div style="display: flex; gap: 12px; justify-content: center; margin-bottom: 20px;">
-        ${isAdmin ? `<a href="#seller-dashboard" class="btn btn-fk-yellow">⚙️ Admin Control Panel CMS</a>` : ''}
+    <div class="section-card" style="padding: 20px; text-align: center;">
+      <h3>User Profile</h3>
+      <p style="color: var(--text-muted); margin: 8px 0 16px 0; font-size: 0.85rem;">${currentUser.email}</p>
+      <div style="display: flex; flex-direction: column; gap: 8px; align-items: center; margin-bottom: 16px;">
+        ${isAdmin ? `<a href="#seller-dashboard" class="btn btn-fk-yellow" style="width:100%; text-align:center;">⚙️ Admin Control Panel CMS</a>` : ''}
       </div>
-      <button id="so-btn" class="btn btn-outline">Logout</button>
+      <button id="so-btn" class="btn btn-outline" style="width:100%;">Logout</button>
     </div>
   `;
   document.getElementById('so-btn').onclick = () => signOut(auth).then(() => location.hash = 'auth');
 }
 
-// 10. FULLY CONNECTED ADMIN DASHBOARD (CMS)
+// 10. FULLY CONNECTED & MOBILE-OPTIMIZED ADMIN DASHBOARD (CMS)
 async function renderSellerDashboardPage() {
   if (!currentUser || (currentUser.email && currentUser.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase())) {
-    appContainer.innerHTML = `<div class="section-card"><h2>Access Denied</h2><p>Only authorized admin can access this page.</p></div>`;
+    appContainer.innerHTML = `<div class="section-card"><h2>Access Denied</h2><p>Only admin can access this page.</p></div>`;
     return;
   }
 
-  // Render Base Interface
   appContainer.innerHTML = `
-    <div class="section-card">
-      <h2>⚙️ Admin Content Management System (CMS)</h2>
-      <p style="color: var(--text-muted); margin-bottom: 20px;">Manage Sliders, Categories, and Products live on Firebase.</p>
+    <div class="section-card" style="padding: 12px;">
+      <h2 style="font-size: 1.2rem; margin-bottom: 4px;">⚙️ Admin CMS</h2>
+      <p style="color: var(--text-muted); margin-bottom: 16px; font-size: 0.8rem;">Manage Sliders, Categories & Products live on Firebase.</p>
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px;">
+      <div class="admin-grid" style="margin-bottom: 24px;">
         
         <!-- SECTION A: Add Slider / Banner -->
-        <form id="admin-banner-form" style="background: #fafafa; padding: 20px; border: 1px solid var(--border); border-radius: 4px;">
-          <h3>1. Add Main Banner / Slider</h3>
-          <div class="form-group"><label>Banner Title</label><input type="text" id="b-title" required placeholder="MEGA SUMMER SALE"/></div>
-          <div class="form-group"><label>Subtitle</label><input type="text" id="b-subtitle" placeholder="Get 50% OFF on all items"/></div>
-          <div class="form-group"><label>Background Image URL</label><input type="url" id="b-image" placeholder="https://..."/></div>
-          <button type="submit" class="btn btn-fk-orange">Save Banner</button>
+        <form id="admin-banner-form" style="background: #fafafa; padding: 12px; border: 1px solid var(--border); border-radius: 6px;">
+          <h4 style="margin-bottom: 8px;">1. Add Main Banner</h4>
+          <div class="form-group"><label>Banner Title</label><input type="text" id="b-title" required placeholder="MEGA SALE" style="width:100%; padding:6px;"/></div>
+          <div class="form-group"><label>Subtitle</label><input type="text" id="b-subtitle" placeholder="50% OFF" style="width:100%; padding:6px;"/></div>
+          <div class="form-group"><label>Image URL</label><input type="url" id="b-image" placeholder="https://..." style="width:100%; padding:6px;"/></div>
+          <button type="submit" class="btn btn-fk-orange" style="width:100%;">Save Banner</button>
         </form>
 
         <!-- SECTION B: Add Category -->
-        <form id="admin-cat-form" style="background: #fafafa; padding: 20px; border: 1px solid var(--border); border-radius: 4px;">
-          <h3>2. Add New Category</h3>
-          <div class="form-group"><label>Category Name</label><input type="text" id="c-name" required placeholder="e.g. Electronics, Games"/></div>
-          <div class="form-group"><label>Category Emoji/Icon</label><input type="text" id="c-icon" placeholder="🎮 or 📱"/></div>
-          <button type="submit" id="c-submit-btn" class="btn btn-fk-yellow">Save Category</button>
+        <form id="admin-cat-form" style="background: #fafafa; padding: 12px; border: 1px solid var(--border); border-radius: 6px;">
+          <h4 style="margin-bottom: 8px;">2. Add New Category</h4>
+          <div class="form-group"><label>Category Name</label><input type="text" id="c-name" required placeholder="e.g. Games" style="width:100%; padding:6px;"/></div>
+          <div class="form-group"><label>Category Emoji/Icon</label><input type="text" id="c-icon" placeholder="🎮" style="width:100%; padding:6px;"/></div>
+          <button type="submit" id="c-submit-btn" class="btn btn-fk-yellow" style="width:100%;">Save Category</button>
         </form>
 
       </div>
 
       <!-- SECTION C: Add Product -->
-      <form id="seller-add-form" style="background: #fafafa; padding: 20px; border: 1px solid var(--border); border-radius: 4px; max-width: 600px; margin-bottom: 32px;">
-        <h3>3. Add New Product</h3>
-        <div class="form-group"><label>Product Title</label><input type="text" id="p-title" required placeholder="e.g. Wireless Headphones"/></div>
+      <form id="seller-add-form" style="background: #fafafa; padding: 12px; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 24px;">
+        <h4 style="margin-bottom: 8px;">3. Add New Product</h4>
+        <div class="form-group"><label>Title</label><input type="text" id="p-title" required placeholder="Wireless Mouse" style="width:100%; padding:6px;"/></div>
         <div class="form-group">
           <label>Category</label>
-          <select id="p-category" style="width: 100%; padding: 10px; border: 1px solid var(--border);">
+          <select id="p-category" style="width: 100%; padding: 8px; border: 1px solid var(--border);">
             <option value="General">General</option>
           </select>
         </div>
-        <div class="form-group"><label>Price ($)</label><input type="number" step="0.01" id="p-price" required placeholder="29.99"/></div>
-        <div class="form-group"><label>Offer Tag (Optional)</label><input type="text" id="p-tag" placeholder="e.g. 20% OFF"/></div>
-        <div class="form-group"><label>Product Image URL</label><input type="url" id="p-image" required placeholder="https://..."/></div>
-        <div class="form-group"><label>Full Description</label><textarea id="p-desc" rows="3" required placeholder="Enter description..."></textarea></div>
-        <button type="submit" class="btn btn-fk-orange">PUBLISH PRODUCT</button>
+        <div class="form-group"><label>Price ($)</label><input type="number" step="0.01" id="p-price" required placeholder="29.99" style="width:100%; padding:6px;"/></div>
+        <div class="form-group"><label>Offer Tag</label><input type="text" id="p-tag" placeholder="20% OFF" style="width:100%; padding:6px;"/></div>
+        <div class="form-group"><label>Image URL</label><input type="url" id="p-image" required placeholder="https://..." style="width:100%; padding:6px;"/></div>
+        <div class="form-group"><label>Description</label><textarea id="p-desc" rows="2" required placeholder="Description..." style="width:100%; padding:6px;"></textarea></div>
+        <button type="submit" class="btn btn-fk-orange" style="width:100%;">PUBLISH PRODUCT</button>
       </form>
 
       <!-- SECTION D: Manage Live Products -->
-      <h3>Manage Live Store Data</h3>
-      <div id="admin-items-list" style="margin-top: 16px;"><p>Loading data...</p></div>
+      <h4 style="margin-bottom: 8px;">Manage Live Products</h4>
+      <div id="admin-items-list" style="overflow-x: auto;"></div>
     </div>
   `;
 
-  // Fetch & Populate Categories Dropdown from Firestore
+  // Fetch & Populate Categories Dropdown
   async function populateCategoryDropdown() {
     const catSelect = document.getElementById('p-category');
     if (!catSelect) return;
@@ -414,10 +570,9 @@ async function renderSellerDashboardPage() {
         createdAt: new Date()
       });
 
-      alert(`Category "${catName}" added successfully!`);
+      alert(`Category "${catName}" added!`);
       document.getElementById('admin-cat-form').reset();
       
-      // Live reload categories strip and dropdown
       await loadDynamicCategoriesStrip();
       await populateCategoryDropdown();
     } catch (err) {
@@ -466,28 +621,27 @@ async function renderSellerDashboardPage() {
     }
   };
 
-  // Load Admin Delete Table safely
+  // Admin Items Table
   const itemsContainer = document.getElementById('admin-items-list');
   try {
     const prodSnap = await getDocs(collection(db, "products"));
     if (prodSnap.empty) {
-      itemsContainer.innerHTML = '<p style="color:var(--text-muted);">No products created yet.</p>';
+      itemsContainer.innerHTML = '<p style="color:var(--text-muted);">No products yet.</p>';
       return;
     }
 
     itemsContainer.innerHTML = `
-      <table class="admin-table">
-        <thead><tr><th>Image</th><th>Title</th><th>Category</th><th>Price</th><th>Action</th></tr></thead>
+      <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem;">
+        <thead><tr style="border-bottom: 1px solid #ccc;"><th style="padding:6px;">Img</th><th style="padding:6px;">Title</th><th style="padding:6px;">Price</th><th style="padding:6px;">Action</th></tr></thead>
         <tbody>
           ${prodSnap.docs.map(docSnap => {
             const data = docSnap.data();
             return `
-              <tr>
-                <td><img src="${data.imageUrl}" style="width: 40px; height: 40px; object-fit: cover;"/></td>
-                <td><b>${data.title}</b></td>
-                <td>${data.category || 'General'}</td>
-                <td>$${data.price}</td>
-                <td><button onclick="deleteItemByAdmin('products', '${docSnap.id}')" class="btn" style="background:#d32f2f; color:#fff; padding:4px 12px; font-size:0.8rem;">Delete</button></td>
+              <tr style="border-bottom: 1px solid #eee;">
+                <td style="padding:6px;"><img src="${data.imageUrl}" style="width: 32px; height: 32px; object-fit: cover; border-radius: 4px;"/></td>
+                <td style="padding:6px;"><b>${data.title}</b></td>
+                <td style="padding:6px;">$${data.price}</td>
+                <td style="padding:6px;"><button onclick="deleteItemByAdmin('products', '${docSnap.id}')" style="background:#d32f2f; color:#fff; border:none; padding:4px 8px; border-radius:4px;">Del</button></td>
               </tr>
             `;
           }).join('')}
@@ -519,13 +673,13 @@ async function fetchProductsGrid(container, searchQuery = '', categoryFilter = '
       container.innerHTML += `
         <div class="card" onclick="location.hash='pdp?id=${docSnap.id}'">
           <img src="${p.imageUrl || 'https://via.placeholder.com/200'}" class="card-img"/>
-          <h3 style="font-size: 0.95rem; font-weight: 600; margin-bottom: 6px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">${p.title}</h3>
-          <div style="margin-bottom: 8px;">
-            <span class="badge-rating">4.5 ★</span>
+          <h3 style="font-size: 0.85rem; font-weight: 600; margin: 6px 0 4px 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">${p.title}</h3>
+          <div style="margin-bottom: 4px;">
+            <span class="badge-rating" style="font-size: 0.7rem; padding: 2px 4px;">4.5 ★</span>
           </div>
           <div>
-            <span class="price-main">$${p.price}</span>
-            ${p.tag ? `<span class="discount-tag">${p.tag}</span>` : ''}
+            <span class="price-main" style="font-size: 0.95rem;">$${p.price}</span>
+            ${p.tag ? `<span class="discount-tag" style="font-size: 0.7rem;">${p.tag}</span>` : ''}
           </div>
         </div>
       `;
