@@ -1,5 +1,5 @@
 import { db, auth, onAuthStateChanged, googleProvider, signInWithPopup, signOut, signInWithEmailAndPassword, ADMIN_EMAIL } from './firebase-config.js';
-import { collection, getDocs, doc, getDoc, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { collection, getDocs, doc, getDoc, addDoc, deleteDoc, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 window.cart = JSON.parse(localStorage.getItem('arcanix_cart')) || [];
 let currentUser = null;
@@ -11,6 +11,7 @@ onAuthStateChanged(auth, (user) => {
 
 const routes = {
   'home': renderHomePage,
+  'plp': renderCategoryProductsPage,
   'pdp': renderProductDetailPage,
   'search': renderSearchResultsPage,
   'cart': renderCartPage,
@@ -18,7 +19,6 @@ const routes = {
   'order-confirmation': renderOrderConfirmationPage,
   'auth': renderAuthPage,
   'account': renderUserDashboardPage,
-  'my-orders': renderOrdersPage,
   'seller-dashboard': renderSellerDashboardPage
 };
 
@@ -31,6 +31,7 @@ function navigate() {
   
   const renderFn = routes[route] || renderHomePage;
   appContainer.innerHTML = '';
+  loadDynamicCategoriesStrip(); // Refresh categories strip on route change
   renderFn(params);
   updateCartBadge();
   window.scrollTo(0, 0);
@@ -56,6 +57,32 @@ function updateCartBadge() {
   if (badge) badge.innerText = window.cart.length;
 }
 
+// Category Strip Loader (Runs Globally)
+async function loadDynamicCategoriesStrip() {
+  const strip = document.getElementById('dynamic-cat-strip');
+  if (!strip) return;
+  try {
+    const snap = await getDocs(collection(db, "categories"));
+    if (snap.empty) {
+      strip.innerHTML = '<div style="font-size:0.85rem; color:#878787;">No categories added yet.</div>';
+      return;
+    }
+    strip.innerHTML = `
+      <div class="cat-item" onclick="location.hash='home'"><span class="cat-icon">🏠</span>All</div>
+      ${snap.docs.map(docSnap => {
+        const c = docSnap.data();
+        return `
+          <div class="cat-item" onclick="location.hash='plp?category=${encodeURIComponent(c.name)}'">
+            <span class="cat-icon">${c.icon || '📦'}</span>${c.name}
+          </div>
+        `;
+      }).join('')}
+    `;
+  } catch(e) {
+    strip.innerHTML = '';
+  }
+}
+
 window.addToCart = (id, title, price, image) => {
   window.cart.push({ id, title, price, image });
   localStorage.setItem('arcanix_cart', JSON.stringify(window.cart));
@@ -69,28 +96,64 @@ window.removeFromCart = (index) => {
   renderCartPage();
 };
 
-window.deleteProductByAdmin = async (id) => {
-  if (confirm("Are you sure you want to delete this item?")) {
-    await deleteDoc(doc(db, "products", id));
-    alert("Item deleted successfully!");
+// Global Admin Delete Functions
+window.deleteItemByAdmin = async (colName, id) => {
+  if (confirm(`Delete this item from ${colName}?`)) {
+    await deleteDoc(doc(db, colName, id));
+    alert("Deleted successfully!");
     renderSellerDashboardPage();
   }
 };
 
-// HOME PAGE: Purely Dynamic Products Listing
+// 1. HOME PAGE (Dynamic Banners + Dynamic Products)
 async function renderHomePage() {
   appContainer.innerHTML = `
+    <!-- Dynamic Admin Slider Section -->
+    <div id="home-slider-container" style="margin-bottom: 20px;"></div>
+
     <div class="section-card">
       <div class="section-title">
-        <span>All Items & Products</span>
+        <span>Featured Products</span>
       </div>
       <div class="grid" id="home-products-grid"><p style="color: var(--text-muted);">Loading products...</p></div>
     </div>
   `;
+  fetchBanners();
   fetchProductsGrid(document.getElementById('home-products-grid'));
 }
 
-// PRODUCT DETAIL PAGE (PDP)
+async function fetchBanners() {
+  const container = document.getElementById('home-slider-container');
+  try {
+    const snap = await getDocs(collection(db, "banners"));
+    if (snap.empty) return;
+    
+    // Display top banner added by admin
+    const b = snap.docs[0].data();
+    container.innerHTML = `
+      <div style="background: linear-gradient(90deg, #1e3c72, #2a5298); color: white; padding: 40px; border-radius: 4px; text-align: center; background-image: url('${b.imageUrl}'); background-size: cover; background-position: center;">
+        <div style="background: rgba(0,0,0,0.5); padding: 20px; border-radius: 4px; display: inline-block;">
+          <h1 style="font-size: 2rem; font-weight: 800; margin-bottom: 8px;">${b.title}</h1>
+          <p>${b.subtitle || ''}</p>
+        </div>
+      </div>
+    `;
+  } catch(e) {}
+}
+
+// 2. CATEGORY PRODUCTS PAGE (PLP)
+async function renderCategoryProductsPage(params) {
+  const categoryName = params.get('category') || '';
+  appContainer.innerHTML = `
+    <div class="section-card">
+      <h2 style="font-size: 1.3rem; margin-bottom: 16px;">Category: ${categoryName}</h2>
+      <div class="grid" id="plp-grid"><p style="color: var(--text-muted);">Loading products...</p></div>
+    </div>
+  `;
+  fetchProductsGrid(document.getElementById('plp-grid'), '', categoryName);
+}
+
+// 3. PRODUCT DETAIL PAGE (PDP)
 async function renderProductDetailPage(params) {
   const id = params.get('id');
   if (!id) return;
@@ -112,6 +175,7 @@ async function renderProductDetailPage(params) {
 
         <div>
           <h1 style="font-size: 1.5rem; font-weight: 600; margin-bottom: 8px;">${p.title}</h1>
+          <div style="font-size:0.85rem; color:var(--fk-blue); font-weight:600; margin-bottom:8px;">Category: ${p.category || 'General'}</div>
           <div class="badge-rating" style="margin-bottom: 12px;">4.5 ★</div>
           
           <div style="margin-bottom: 16px;">
@@ -129,7 +193,7 @@ async function renderProductDetailPage(params) {
   }
 }
 
-// SEARCH PAGE
+// 4. SEARCH PAGE
 function renderSearchResultsPage(params) {
   const query = params.get('q') || '';
   appContainer.innerHTML = `
@@ -141,7 +205,7 @@ function renderSearchResultsPage(params) {
   fetchProductsGrid(document.getElementById('search-grid'), query);
 }
 
-// CART PAGE
+// 5. CART PAGE
 function renderCartPage() {
   if (window.cart.length === 0) {
     appContainer.innerHTML = `<div class="section-card" style="text-align: center; padding: 40px;"><h2>Your Shopping Cart is Empty!</h2><br/><a href="#home" class="btn btn-fk-orange">Shop Now</a></div>`;
@@ -181,7 +245,7 @@ function renderCartPage() {
   `;
 }
 
-// CHECKOUT PAGE
+// 6. CHECKOUT PAGE
 function renderCheckoutPage() {
   let total = window.cart.reduce((sum, item) => sum + item.price, 0);
   appContainer.innerHTML = `
@@ -205,7 +269,7 @@ function renderCheckoutPage() {
   };
 }
 
-// ORDER CONFIRMATION
+// 7. ORDER CONFIRMATION
 function renderOrderConfirmationPage() {
   appContainer.innerHTML = `
     <div class="section-card" style="text-align: center; padding: 40px;">
@@ -216,7 +280,7 @@ function renderOrderConfirmationPage() {
   `;
 }
 
-// AUTHENTICATION
+// 8. AUTHENTICATION
 function renderAuthPage() {
   appContainer.innerHTML = `
     <div class="form-card">
@@ -238,7 +302,7 @@ function renderAuthPage() {
   };
 }
 
-// USER ACCOUNT & ADMIN CHECK
+// 9. USER ACCOUNT & ADMIN ACCESS
 function renderUserDashboardPage() {
   if (!currentUser) { location.hash = 'auth'; return; }
   const isAdmin = currentUser.email && currentUser.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
@@ -248,7 +312,7 @@ function renderUserDashboardPage() {
       <h2>User Profile</h2>
       <p style="color: var(--text-muted); margin: 8px 0 20px 0;">${currentUser.email}</p>
       <div style="display: flex; gap: 12px; justify-content: center; margin-bottom: 20px;">
-        ${isAdmin ? `<a href="#seller-dashboard" class="btn btn-fk-yellow">⚙️ Admin Control Panel</a>` : ''}
+        ${isAdmin ? `<a href="#seller-dashboard" class="btn btn-fk-yellow">⚙️ Admin Control Panel CMS</a>` : ''}
       </div>
       <button id="so-btn" class="btn btn-outline">Logout</button>
     </div>
@@ -256,92 +320,153 @@ function renderUserDashboardPage() {
   document.getElementById('so-btn').onclick = () => signOut(auth).then(() => location.hash = 'auth');
 }
 
-function renderOrdersPage() { appContainer.innerHTML = `<div class="section-card"><h2>My Orders</h2><p>No recent orders.</p></div>`; }
-
-// ADMIN PANEL: Full Control Over Products (Add & Delete)
+// 10. ADMIN DASHBOARD (CMS FOR SLIDERS, CATEGORIES, & PRODUCTS)
 async function renderSellerDashboardPage() {
   if (!currentUser || (currentUser.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase())) {
     appContainer.innerHTML = `<div class="section-card"><h2>Access Denied</h2><p>Only authorized admin can access this page.</p></div>`;
     return;
   }
 
+  // Load existing categories for product select dropdown
+  const catSnap = await getDocs(collection(db, "categories"));
+  const categoriesList = catSnap.docs.map(d => d.data().name);
+
   appContainer.innerHTML = `
     <div class="section-card">
-      <h2>⚙️ Admin Control Panel</h2>
-      <p style="color: var(--text-muted); margin-bottom: 20px;">Add new items or manage existing products on your store.</p>
+      <h2>⚙️ Admin Content Management System (CMS)</h2>
+      <p style="color: var(--text-muted); margin-bottom: 20px;">Manage Sliders, Categories, and Products live on your store.</p>
 
-      <form id="seller-add-form" style="max-width: 600px; background: #fafafa; padding: 20px; border: 1px solid var(--border); border-radius: 4px;">
-        <h3 style="margin-bottom: 12px;">Add New Product</h3>
-        <div class="form-group"><label>Product Title</label><input type="text" id="p-title" required placeholder="e.g. Wireless Headphones / Unity Asset Pack"/></div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px;">
+        
+        <!-- SECTION A: Add Slider / Banner -->
+        <form id="admin-banner-form" style="background: #fafafa; padding: 20px; border: 1px solid var(--border); border-radius: 4px;">
+          <h3>1. Add Main Banner / Slider</h3>
+          <div class="form-group"><label>Banner Title</label><input type="text" id="b-title" required placeholder="MEGA SUMMER SALE"/></div>
+          <div class="form-group"><label>Subtitle</label><input type="text" id="b-subtitle" placeholder="Get 50% OFF on all items"/></div>
+          <div class="form-group"><label>Background Image URL</label><input type="url" id="b-image" placeholder="https://..."/></div>
+          <button type="submit" class="btn btn-fk-orange">Save Banner</button>
+        </form>
+
+        <!-- SECTION B: Add Category -->
+        <form id="admin-cat-form" style="background: #fafafa; padding: 20px; border: 1px solid var(--border); border-radius: 4px;">
+          <h3>2. Add New Category</h3>
+          <div class="form-group"><label>Category Name</label><input type="text" id="c-name" required placeholder="e.g. Electronics, Unity Assets"/></div>
+          <div class="form-group"><label>Category Emoji/Icon</label><input type="text" id="c-icon" placeholder="🎮 or 📱"/></div>
+          <button type="submit" class="btn btn-fk-yellow">Save Category</button>
+        </form>
+
+      </div>
+
+      <!-- SECTION C: Add Product -->
+      <form id="seller-add-form" style="background: #fafafa; padding: 20px; border: 1px solid var(--border); border-radius: 4px; max-width: 600px; margin-bottom: 32px;">
+        <h3>3. Add New Product</h3>
+        <div class="form-group"><label>Product Title</label><input type="text" id="p-title" required placeholder="e.g. Wireless Headphones"/></div>
+        <div class="form-group">
+          <label>Category</label>
+          <select id="p-category" style="width: 100%; padding: 10px; border: 1px solid var(--border);">
+            <option value="General">General</option>
+            ${categoriesList.map(c => `<option value="${c}">${c}</option>`).join('')}
+          </select>
+        </div>
         <div class="form-group"><label>Price ($)</label><input type="number" step="0.01" id="p-price" required placeholder="29.99"/></div>
-        <div class="form-group"><label>Offer Tag (Optional)</label><input type="text" id="p-tag" placeholder="e.g. 20% OFF or Special Deal"/></div>
+        <div class="form-group"><label>Offer Tag (Optional)</label><input type="text" id="p-tag" placeholder="e.g. 20% OFF"/></div>
         <div class="form-group"><label>Product Image URL</label><input type="url" id="p-image" required placeholder="https://..."/></div>
-        <div class="form-group"><label>Full Description</label><textarea id="p-desc" rows="4" required placeholder="Enter detailed product description..."></textarea></div>
+        <div class="form-group"><label>Full Description</label><textarea id="p-desc" rows="3" required placeholder="Enter description..."></textarea></div>
         <button type="submit" class="btn btn-fk-orange">PUBLISH PRODUCT</button>
       </form>
 
-      <h3 style="margin-top: 32px; margin-bottom: 16px;">Manage Listed Items</h3>
-      <div id="admin-items-list"><p>Loading live store items...</p></div>
+      <!-- SECTION D: Manage Products & Categories -->
+      <h3>Manage Dynamic Store Data</h3>
+      <div id="admin-items-list" style="margin-top: 16px;"><p>Loading data...</p></div>
     </div>
   `;
 
-  // Fetch items for deletion management
-  const itemsContainer = document.getElementById('admin-items-list');
-  const snap = await getDocs(collection(db, "products"));
-  if (snap.empty) {
-    itemsContainer.innerHTML = '<p>No live items found in store.</p>';
-  } else {
-    itemsContainer.innerHTML = `
-      <table class="admin-table">
-        <thead><tr><th>Image</th><th>Title</th><th>Price</th><th>Action</th></tr></thead>
-        <tbody>
-          ${snap.docs.map(docSnap => {
-            const data = docSnap.data();
-            return `
-              <tr>
-                <td><img src="${data.imageUrl}" style="width: 40px; height: 40px; object-fit: cover;"/></td>
-                <td><b>${data.title}</b></td>
-                <td>$${data.price}</td>
-                <td><button onclick="deleteProductByAdmin('${docSnap.id}')" class="btn" style="background:#d32f2f; color:#fff; padding:4px 12px; font-size:0.8rem;">Delete</button></td>
-              </tr>
-            `;
-          }).join('')}
-        </tbody>
-      </table>
-    `;
-  }
+  // Submit Banner
+  document.getElementById('admin-banner-form').onsubmit = async (e) => {
+    e.preventDefault();
+    await addDoc(collection(db, "banners"), {
+      title: document.getElementById('b-title').value,
+      subtitle: document.getElementById('b-subtitle').value,
+      imageUrl: document.getElementById('b-image').value,
+      createdAt: new Date()
+    });
+    alert("Banner updated!");
+    renderSellerDashboardPage();
+  };
 
+  // Submit Category
+  document.getElementById('admin-cat-form').onsubmit = async (e) => {
+    e.preventDefault();
+    await addDoc(collection(db, "categories"), {
+      name: document.getElementById('c-name').value,
+      icon: document.getElementById('c-icon').value,
+      createdAt: new Date()
+    });
+    alert("Category created!");
+    loadDynamicCategoriesStrip();
+    renderSellerDashboardPage();
+  };
+
+  // Submit Product
   document.getElementById('seller-add-form').onsubmit = async (e) => {
     e.preventDefault();
     await addDoc(collection(db, "products"), {
       title: document.getElementById('p-title').value,
+      category: document.getElementById('p-category').value,
       price: parseFloat(document.getElementById('p-price').value),
       tag: document.getElementById('p-tag').value || '',
       imageUrl: document.getElementById('p-image').value,
       description: document.getElementById('p-desc').value,
       createdAt: new Date()
     });
-    alert("New product published live!");
+    alert("Product published!");
     renderSellerDashboardPage();
   };
+
+  // Load Deletion Table
+  const itemsContainer = document.getElementById('admin-items-list');
+  const prodSnap = await getDocs(collection(db, "products"));
+  
+  itemsContainer.innerHTML = `
+    <table class="admin-table">
+      <thead><tr><th>Image</th><th>Title</th><th>Category</th><th>Price</th><th>Action</th></tr></thead>
+      <tbody>
+        ${prodSnap.docs.map(docSnap => {
+          const data = docSnap.data();
+          return `
+            <tr>
+              <td><img src="${data.imageUrl}" style="width: 40px; height: 40px; object-fit: cover;"/></td>
+              <td><b>${data.title}</b></td>
+              <td>${data.category || 'General'}</td>
+              <td>$${data.price}</td>
+              <td><button onclick="deleteItemByAdmin('products', '${docSnap.id}')" class="btn" style="background:#d32f2f; color:#fff; padding:4px 12px; font-size:0.8rem;">Delete</button></td>
+            </tr>
+          `;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
 }
 
-// Dynamic Store Renderer
-async function fetchProductsGrid(container, searchQuery = '') {
+// Fetcher Function for Store Products Grid
+async function fetchProductsGrid(container, searchQuery = '', categoryFilter = '') {
   try {
     const snap = await getDocs(collection(db, "products"));
     container.innerHTML = '';
     
     if (snap.empty) {
-      container.innerHTML = '<p style="grid-column: 1/-1;">No products found in the store yet. Add items via Admin Panel.</p>';
+      container.innerHTML = '<p style="grid-column: 1/-1;">No products found in the store yet.</p>';
       return;
     }
 
     snap.forEach((docSnap) => {
       const p = docSnap.data();
-      if (searchQuery && !p.title.toLowerCase().includes(searchQuery.toLowerCase())) {
-        return;
-      }
+      
+      // Search query filter
+      if (searchQuery && !p.title.toLowerCase().includes(searchQuery.toLowerCase())) return;
+      
+      // Category filter
+      if (categoryFilter && p.category !== categoryFilter) return;
 
       container.innerHTML += `
         <div class="card" onclick="location.hash='pdp?id=${docSnap.id}'">
