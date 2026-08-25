@@ -34,7 +34,7 @@ export {
 };
 
 // ⚠️ ADMIN EMAIL YAHAN APNA RAKHO:
-export const ADMIN_EMAIL = "apna-email@gmail.com";
+export const ADMIN_EMAIL = "arcanixsupport2509@gmail.com";
 
 export const IMGBB_API_KEY = "0298c2843fc0f575928ba0562d0fb697";
 export const GEMINI_API_KEY = "AQ.Ab8RN6Ii8UOz6k3MjH_1LBGtFkl22QFHqU1-qCCksUfbg2n9GQ";
