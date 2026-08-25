@@ -1,5 +1,5 @@
 import { db, auth, onAuthStateChanged, googleProvider, signInWithPopup, signOut, signInWithEmailAndPassword, ADMIN_EMAIL } from './firebase-config.js';
-import { collection, getDocs, doc, getDoc, addDoc, deleteDoc, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { collection, getDocs, doc, getDoc, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 window.cart = JSON.parse(localStorage.getItem('arcanix_cart')) || [];
 let currentUser = null;
@@ -31,7 +31,7 @@ function navigate() {
   
   const renderFn = routes[route] || renderHomePage;
   appContainer.innerHTML = '';
-  loadDynamicCategoriesStrip(); // Refresh categories strip on route change
+  loadDynamicCategoriesStrip();
   renderFn(params);
   updateCartBadge();
   window.scrollTo(0, 0);
@@ -57,7 +57,7 @@ function updateCartBadge() {
   if (badge) badge.innerText = window.cart.length;
 }
 
-// Category Strip Loader (Runs Globally)
+// Category Strip Loader (Runs Globally & Safely)
 async function loadDynamicCategoriesStrip() {
   const strip = document.getElementById('dynamic-cat-strip');
   if (!strip) return;
@@ -96,7 +96,6 @@ window.removeFromCart = (index) => {
   renderCartPage();
 };
 
-// Global Admin Delete Functions
 window.deleteItemByAdmin = async (colName, id) => {
   if (confirm(`Delete this item from ${colName}?`)) {
     await deleteDoc(doc(db, colName, id));
@@ -105,12 +104,10 @@ window.deleteItemByAdmin = async (colName, id) => {
   }
 };
 
-// 1. HOME PAGE (Dynamic Banners + Dynamic Products)
+// 1. HOME PAGE
 async function renderHomePage() {
   appContainer.innerHTML = `
-    <!-- Dynamic Admin Slider Section -->
     <div id="home-slider-container" style="margin-bottom: 20px;"></div>
-
     <div class="section-card">
       <div class="section-title">
         <span>Featured Products</span>
@@ -127,8 +124,6 @@ async function fetchBanners() {
   try {
     const snap = await getDocs(collection(db, "banners"));
     if (snap.empty) return;
-    
-    // Display top banner added by admin
     const b = snap.docs[0].data();
     container.innerHTML = `
       <div style="background: linear-gradient(90deg, #1e3c72, #2a5298); color: white; padding: 40px; border-radius: 4px; text-align: center; background-image: url('${b.imageUrl}'); background-size: cover; background-position: center;">
@@ -172,17 +167,14 @@ async function renderProductDetailPage(params) {
             <button onclick="addToCart('${id}', '${p.title}', ${p.price}, '${p.imageUrl}'); location.hash='checkout';" class="btn btn-fk-orange" style="flex: 1;">BUY NOW</button>
           </div>
         </div>
-
         <div>
           <h1 style="font-size: 1.5rem; font-weight: 600; margin-bottom: 8px;">${p.title}</h1>
           <div style="font-size:0.85rem; color:var(--fk-blue); font-weight:600; margin-bottom:8px;">Category: ${p.category || 'General'}</div>
           <div class="badge-rating" style="margin-bottom: 12px;">4.5 ★</div>
-          
           <div style="margin-bottom: 16px;">
             <span class="price-main">$${p.price}</span>
             ${p.tag ? `<span class="discount-tag">${p.tag}</span>` : ''}
           </div>
-
           <h4 style="margin-bottom: 8px;">Item Description:</h4>
           <p style="color: #555; font-size: 0.95rem; line-height: 1.6; white-space: pre-line;">${p.description || 'No description provided.'}</p>
         </div>
@@ -228,7 +220,6 @@ function renderCartPage() {
           </div>
         `).join('')}
       </div>
-
       <div class="section-card" style="height: fit-content;">
         <h4 style="color: var(--text-muted); border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 12px;">PRICE DETAILS</h4>
         <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
@@ -320,17 +311,14 @@ function renderUserDashboardPage() {
   document.getElementById('so-btn').onclick = () => signOut(auth).then(() => location.hash = 'auth');
 }
 
-// 10. ADMIN DASHBOARD (CMS FOR SLIDERS, CATEGORIES, & PRODUCTS)
+// 10. CRASH-PROOF ADMIN DASHBOARD (CMS)
 async function renderSellerDashboardPage() {
-  if (!currentUser || (currentUser.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase())) {
+  if (!currentUser || (currentUser.email && currentUser.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase())) {
     appContainer.innerHTML = `<div class="section-card"><h2>Access Denied</h2><p>Only authorized admin can access this page.</p></div>`;
     return;
   }
 
-  // Load existing categories for product select dropdown
-  const catSnap = await getDocs(collection(db, "categories"));
-  const categoriesList = catSnap.docs.map(d => d.data().name);
-
+  // 1. Instantly Render HTML to prevent blank screens
   appContainer.innerHTML = `
     <div class="section-card">
       <h2>⚙️ Admin Content Management System (CMS)</h2>
@@ -365,7 +353,6 @@ async function renderSellerDashboardPage() {
           <label>Category</label>
           <select id="p-category" style="width: 100%; padding: 10px; border: 1px solid var(--border);">
             <option value="General">General</option>
-            ${categoriesList.map(c => `<option value="${c}">${c}</option>`).join('')}
           </select>
         </div>
         <div class="form-group"><label>Price ($)</label><input type="number" step="0.01" id="p-price" required placeholder="29.99"/></div>
@@ -375,13 +362,29 @@ async function renderSellerDashboardPage() {
         <button type="submit" class="btn btn-fk-orange">PUBLISH PRODUCT</button>
       </form>
 
-      <!-- SECTION D: Manage Products & Categories -->
+      <!-- SECTION D: Manage Products -->
       <h3>Manage Dynamic Store Data</h3>
       <div id="admin-items-list" style="margin-top: 16px;"><p>Loading data...</p></div>
     </div>
   `;
 
-  // Submit Banner
+  // 2. Load Categories safely into Dropdown
+  try {
+    const catSnap = await getDocs(collection(db, "categories"));
+    const catSelect = document.getElementById('p-category');
+    if (catSelect && !catSnap.empty) {
+      catSnap.docs.forEach(d => {
+        const option = document.createElement('option');
+        option.value = d.data().name;
+        option.textContent = d.data().name;
+        catSelect.appendChild(option);
+      });
+    }
+  } catch (err) {
+    console.error("Categories fetch error:", err);
+  }
+
+  // 3. Banner Form Submit
   document.getElementById('admin-banner-form').onsubmit = async (e) => {
     e.preventDefault();
     await addDoc(collection(db, "banners"), {
@@ -394,7 +397,7 @@ async function renderSellerDashboardPage() {
     renderSellerDashboardPage();
   };
 
-  // Submit Category
+  // 4. Category Form Submit
   document.getElementById('admin-cat-form').onsubmit = async (e) => {
     e.preventDefault();
     await addDoc(collection(db, "categories"), {
@@ -407,7 +410,7 @@ async function renderSellerDashboardPage() {
     renderSellerDashboardPage();
   };
 
-  // Submit Product
+  // 5. Product Form Submit
   document.getElementById('seller-add-form').onsubmit = async (e) => {
     e.preventDefault();
     await addDoc(collection(db, "products"), {
@@ -423,29 +426,37 @@ async function renderSellerDashboardPage() {
     renderSellerDashboardPage();
   };
 
-  // Load Deletion Table
+  // 6. Load Products List Safely
   const itemsContainer = document.getElementById('admin-items-list');
-  const prodSnap = await getDocs(collection(db, "products"));
-  
-  itemsContainer.innerHTML = `
-    <table class="admin-table">
-      <thead><tr><th>Image</th><th>Title</th><th>Category</th><th>Price</th><th>Action</th></tr></thead>
-      <tbody>
-        ${prodSnap.docs.map(docSnap => {
-          const data = docSnap.data();
-          return `
-            <tr>
-              <td><img src="${data.imageUrl}" style="width: 40px; height: 40px; object-fit: cover;"/></td>
-              <td><b>${data.title}</b></td>
-              <td>${data.category || 'General'}</td>
-              <td>$${data.price}</td>
-              <td><button onclick="deleteItemByAdmin('products', '${docSnap.id}')" class="btn" style="background:#d32f2f; color:#fff; padding:4px 12px; font-size:0.8rem;">Delete</button></td>
-            </tr>
-          `;
-        }).join('')}
-      </tbody>
-    </table>
-  `;
+  try {
+    const prodSnap = await getDocs(collection(db, "products"));
+    if (prodSnap.empty) {
+      itemsContainer.innerHTML = '<p style="color:var(--text-muted);">No products created yet.</p>';
+      return;
+    }
+
+    itemsContainer.innerHTML = `
+      <table class="admin-table">
+        <thead><tr><th>Image</th><th>Title</th><th>Category</th><th>Price</th><th>Action</th></tr></thead>
+        <tbody>
+          ${prodSnap.docs.map(docSnap => {
+            const data = docSnap.data();
+            return `
+              <tr>
+                <td><img src="${data.imageUrl}" style="width: 40px; height: 40px; object-fit: cover;"/></td>
+                <td><b>${data.title}</b></td>
+                <td>${data.category || 'General'}</td>
+                <td>$${data.price}</td>
+                <td><button onclick="deleteItemByAdmin('products', '${docSnap.id}')" class="btn" style="background:#d32f2f; color:#fff; padding:4px 12px; font-size:0.8rem;">Delete</button></td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    `;
+  } catch (err) {
+    itemsContainer.innerHTML = '<p>Error loading items.</p>';
+  }
 }
 
 // Fetcher Function for Store Products Grid
@@ -462,21 +473,16 @@ async function fetchProductsGrid(container, searchQuery = '', categoryFilter = '
     snap.forEach((docSnap) => {
       const p = docSnap.data();
       
-      // Search query filter
       if (searchQuery && !p.title.toLowerCase().includes(searchQuery.toLowerCase())) return;
-      
-      // Category filter
       if (categoryFilter && p.category !== categoryFilter) return;
 
       container.innerHTML += `
         <div class="card" onclick="location.hash='pdp?id=${docSnap.id}'">
           <img src="${p.imageUrl || 'https://via.placeholder.com/200'}" class="card-img"/>
           <h3 style="font-size: 0.95rem; font-weight: 600; margin-bottom: 6px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">${p.title}</h3>
-          
           <div style="margin-bottom: 8px;">
             <span class="badge-rating">4.5 ★</span>
           </div>
-
           <div>
             <span class="price-main">$${p.price}</span>
             ${p.tag ? `<span class="discount-tag">${p.tag}</span>` : ''}
