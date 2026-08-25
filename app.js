@@ -57,14 +57,14 @@ function updateCartBadge() {
   if (badge) badge.innerText = window.cart.length;
 }
 
-// Category Strip Loader (Runs Globally & Safely)
+// Global Category Strip Loader (Firebase Firestore Connected)
 async function loadDynamicCategoriesStrip() {
   const strip = document.getElementById('dynamic-cat-strip');
   if (!strip) return;
   try {
     const snap = await getDocs(collection(db, "categories"));
     if (snap.empty) {
-      strip.innerHTML = '<div style="font-size:0.85rem; color:#878787;">No categories added yet.</div>';
+      strip.innerHTML = '<div style="font-size:0.85rem; color:#878787; padding: 10px;">No categories added yet.</div>';
       return;
     }
     strip.innerHTML = `
@@ -79,7 +79,7 @@ async function loadDynamicCategoriesStrip() {
       }).join('')}
     `;
   } catch(e) {
-    strip.innerHTML = '';
+    console.error("Error loading categories strip:", e);
   }
 }
 
@@ -98,9 +98,13 @@ window.removeFromCart = (index) => {
 
 window.deleteItemByAdmin = async (colName, id) => {
   if (confirm(`Delete this item from ${colName}?`)) {
-    await deleteDoc(doc(db, colName, id));
-    alert("Deleted successfully!");
-    renderSellerDashboardPage();
+    try {
+      await deleteDoc(doc(db, colName, id));
+      alert("Deleted successfully!");
+      renderSellerDashboardPage();
+    } catch(err) {
+      alert("Error deleting: " + err.message);
+    }
   }
 };
 
@@ -311,18 +315,18 @@ function renderUserDashboardPage() {
   document.getElementById('so-btn').onclick = () => signOut(auth).then(() => location.hash = 'auth');
 }
 
-// 10. CRASH-PROOF ADMIN DASHBOARD (CMS)
+// 10. FULLY CONNECTED ADMIN DASHBOARD (CMS)
 async function renderSellerDashboardPage() {
   if (!currentUser || (currentUser.email && currentUser.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase())) {
     appContainer.innerHTML = `<div class="section-card"><h2>Access Denied</h2><p>Only authorized admin can access this page.</p></div>`;
     return;
   }
 
-  // 1. Instantly Render HTML to prevent blank screens
+  // Render Base Interface
   appContainer.innerHTML = `
     <div class="section-card">
       <h2>⚙️ Admin Content Management System (CMS)</h2>
-      <p style="color: var(--text-muted); margin-bottom: 20px;">Manage Sliders, Categories, and Products live on your store.</p>
+      <p style="color: var(--text-muted); margin-bottom: 20px;">Manage Sliders, Categories, and Products live on Firebase.</p>
 
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px;">
         
@@ -338,9 +342,9 @@ async function renderSellerDashboardPage() {
         <!-- SECTION B: Add Category -->
         <form id="admin-cat-form" style="background: #fafafa; padding: 20px; border: 1px solid var(--border); border-radius: 4px;">
           <h3>2. Add New Category</h3>
-          <div class="form-group"><label>Category Name</label><input type="text" id="c-name" required placeholder="e.g. Electronics, Unity Assets"/></div>
+          <div class="form-group"><label>Category Name</label><input type="text" id="c-name" required placeholder="e.g. Electronics, Games"/></div>
           <div class="form-group"><label>Category Emoji/Icon</label><input type="text" id="c-icon" placeholder="🎮 or 📱"/></div>
-          <button type="submit" class="btn btn-fk-yellow">Save Category</button>
+          <button type="submit" id="c-submit-btn" class="btn btn-fk-yellow">Save Category</button>
         </form>
 
       </div>
@@ -362,71 +366,107 @@ async function renderSellerDashboardPage() {
         <button type="submit" class="btn btn-fk-orange">PUBLISH PRODUCT</button>
       </form>
 
-      <!-- SECTION D: Manage Products -->
-      <h3>Manage Dynamic Store Data</h3>
+      <!-- SECTION D: Manage Live Products -->
+      <h3>Manage Live Store Data</h3>
       <div id="admin-items-list" style="margin-top: 16px;"><p>Loading data...</p></div>
     </div>
   `;
 
-  // 2. Load Categories safely into Dropdown
-  try {
-    const catSnap = await getDocs(collection(db, "categories"));
+  // Fetch & Populate Categories Dropdown from Firestore
+  async function populateCategoryDropdown() {
     const catSelect = document.getElementById('p-category');
-    if (catSelect && !catSnap.empty) {
-      catSnap.docs.forEach(d => {
-        const option = document.createElement('option');
-        option.value = d.data().name;
-        option.textContent = d.data().name;
-        catSelect.appendChild(option);
-      });
+    if (!catSelect) return;
+    try {
+      const catSnap = await getDocs(collection(db, "categories"));
+      catSelect.innerHTML = '<option value="General">General</option>';
+      if (!catSnap.empty) {
+        catSnap.docs.forEach(d => {
+          const catName = d.data().name;
+          const option = document.createElement('option');
+          option.value = catName;
+          option.textContent = catName;
+          catSelect.appendChild(option);
+        });
+      }
+    } catch (err) {
+      console.error("Categories Fetch Error:", err);
     }
-  } catch (err) {
-    console.error("Categories fetch error:", err);
   }
 
-  // 3. Banner Form Submit
-  document.getElementById('admin-banner-form').onsubmit = async (e) => {
-    e.preventDefault();
-    await addDoc(collection(db, "banners"), {
-      title: document.getElementById('b-title').value,
-      subtitle: document.getElementById('b-subtitle').value,
-      imageUrl: document.getElementById('b-image').value,
-      createdAt: new Date()
-    });
-    alert("Banner updated!");
-    renderSellerDashboardPage();
-  };
+  await populateCategoryDropdown();
 
-  // 4. Category Form Submit
+  // Handle Category Add Form Submission (Firebase Connected)
   document.getElementById('admin-cat-form').onsubmit = async (e) => {
     e.preventDefault();
-    await addDoc(collection(db, "categories"), {
-      name: document.getElementById('c-name').value,
-      icon: document.getElementById('c-icon').value,
-      createdAt: new Date()
-    });
-    alert("Category created!");
-    loadDynamicCategoriesStrip();
-    renderSellerDashboardPage();
+    const submitBtn = document.getElementById('c-submit-btn');
+    const catName = document.getElementById('c-name').value.trim();
+    const catIcon = document.getElementById('c-icon').value.trim();
+
+    if (!catName) return;
+
+    try {
+      submitBtn.disabled = true;
+      submitBtn.innerText = "Saving...";
+
+      await addDoc(collection(db, "categories"), {
+        name: catName,
+        icon: catIcon || '📦',
+        createdAt: new Date()
+      });
+
+      alert(`Category "${catName}" added successfully!`);
+      document.getElementById('admin-cat-form').reset();
+      
+      // Live reload categories strip and dropdown
+      await loadDynamicCategoriesStrip();
+      await populateCategoryDropdown();
+    } catch (err) {
+      alert("Error adding category: " + err.message);
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.innerText = "Save Category";
+    }
   };
 
-  // 5. Product Form Submit
+  // Handle Banner Submit
+  document.getElementById('admin-banner-form').onsubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await addDoc(collection(db, "banners"), {
+        title: document.getElementById('b-title').value,
+        subtitle: document.getElementById('b-subtitle').value,
+        imageUrl: document.getElementById('b-image').value,
+        createdAt: new Date()
+      });
+      alert("Banner saved!");
+      document.getElementById('admin-banner-form').reset();
+    } catch(err) {
+      alert("Error adding banner: " + err.message);
+    }
+  };
+
+  // Handle Product Submit
   document.getElementById('seller-add-form').onsubmit = async (e) => {
     e.preventDefault();
-    await addDoc(collection(db, "products"), {
-      title: document.getElementById('p-title').value,
-      category: document.getElementById('p-category').value,
-      price: parseFloat(document.getElementById('p-price').value),
-      tag: document.getElementById('p-tag').value || '',
-      imageUrl: document.getElementById('p-image').value,
-      description: document.getElementById('p-desc').value,
-      createdAt: new Date()
-    });
-    alert("Product published!");
-    renderSellerDashboardPage();
+    try {
+      await addDoc(collection(db, "products"), {
+        title: document.getElementById('p-title').value,
+        category: document.getElementById('p-category').value,
+        price: parseFloat(document.getElementById('p-price').value),
+        tag: document.getElementById('p-tag').value || '',
+        imageUrl: document.getElementById('p-image').value,
+        description: document.getElementById('p-desc').value,
+        createdAt: new Date()
+      });
+      alert("Product published!");
+      document.getElementById('seller-add-form').reset();
+      renderSellerDashboardPage();
+    } catch(err) {
+      alert("Error adding product: " + err.message);
+    }
   };
 
-  // 6. Load Products List Safely
+  // Load Admin Delete Table safely
   const itemsContainer = document.getElementById('admin-items-list');
   try {
     const prodSnap = await getDocs(collection(db, "products"));
@@ -455,7 +495,7 @@ async function renderSellerDashboardPage() {
       </table>
     `;
   } catch (err) {
-    itemsContainer.innerHTML = '<p>Error loading items.</p>';
+    itemsContainer.innerHTML = '<p>Error loading items list.</p>';
   }
 }
 
