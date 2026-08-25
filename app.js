@@ -24,23 +24,22 @@ const routes = {
 
 const appContainer = document.getElementById('app-view');
 
-// 1. Professional E-Commerce CSS (Flipkart / Amazon Theme)
+// 1. Professional E-Commerce CSS
 function injectResponsiveStyles() {
   if (document.getElementById('responsive-custom-styles')) return;
   const style = document.createElement('style');
   style.id = 'responsive-custom-styles';
   style.innerHTML = `
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: Inter, -apple-system, Roboto, Helvetica, Arial, sans-serif; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: Inter, -apple-system, Roboto, meiryo, sans-serif; }
     body { background-color: #f1f3f6; color: #212121; }
 
-    /* Main Container */
     .main-container {
       max-width: 1280px;
       margin: 0 auto;
       padding: 12px;
     }
 
-    /* Flipkart Blue Top Nav */
+    /* Top Nav */
     .app-header {
       position: sticky;
       top: 0;
@@ -78,11 +77,9 @@ function injectResponsiveStyles() {
       color: #fff;
       text-decoration: none;
       font-style: italic;
-      letter-spacing: -0.5px;
     }
     .brand-logo span { color: #ffe500; font-style: normal; }
 
-    /* Search Box */
     .header-search-box {
       flex: 1;
       max-width: 600px;
@@ -95,7 +92,6 @@ function injectResponsiveStyles() {
       border-radius: 2px;
       outline: none;
       font-size: 0.9rem;
-      box-shadow: 0 1px 2px 0 rgba(0,0,0,.2);
     }
     .header-search-box button {
       position: absolute;
@@ -146,40 +142,6 @@ function injectResponsiveStyles() {
     @media (min-width: 768px) {
       .hamburger-btn { display: none !important; }
       .main-container { padding: 16px; }
-    }
-
-    /* Categories Strip */
-    .cat-strip-container {
-      display: flex;
-      overflow-x: auto;
-      white-space: nowrap;
-      padding: 12px 16px;
-      gap: 24px;
-      background: #fff;
-      border-bottom: 1px solid #e0e0e0;
-      box-shadow: 0 1px 1px 0 rgba(0,0,0,.16);
-      margin-bottom: 12px;
-    }
-    .cat-strip-container::-webkit-scrollbar { display: none; }
-    .cat-item {
-      display: inline-flex;
-      flex-direction: column;
-      align-items: center;
-      font-size: 0.8rem;
-      font-weight: 600;
-      cursor: pointer;
-      color: #212121;
-    }
-    .cat-icon-circle {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      background: #f1f3f6;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.4rem;
-      margin-bottom: 6px;
     }
 
     /* Product Cards */
@@ -295,7 +257,7 @@ function injectResponsiveStyles() {
   document.head.appendChild(style);
 }
 
-// 2. Persistent Header Setup
+// 2. Header Setup
 function setupResponsiveHeader() {
   const oldHeader = document.getElementById('main-header');
   if (!oldHeader) {
@@ -397,7 +359,6 @@ function navigate() {
   appContainer.className = 'main-container';
   appContainer.innerHTML = '';
   
-  loadDynamicCategoriesStrip();
   renderFn(params);
   updateCartBadge();
   updateNavState();
@@ -426,42 +387,6 @@ function updateCartBadge() {
   if (badge) badge.innerText = window.cart.length;
 }
 
-// Category Bar UI
-async function loadDynamicCategoriesStrip() {
-  let strip = document.getElementById('dynamic-cat-strip');
-  if (!strip) {
-    strip = document.createElement('div');
-    strip.id = 'dynamic-cat-strip';
-    appContainer.before(strip);
-  }
-  strip.className = 'cat-strip-container';
-
-  try {
-    const snap = await getDocs(collection(db, "categories"));
-    if (snap.empty) {
-      strip.innerHTML = '<div style="font-size:0.85rem; color:#878787;">No categories added yet.</div>';
-      return;
-    }
-    strip.innerHTML = `
-      <div class="cat-item" onclick="location.hash='home'">
-        <div class="cat-icon-circle">🏠</div>
-        <span>All</span>
-      </div>
-      ${snap.docs.map(docSnap => {
-        const c = docSnap.data();
-        return `
-          <div class="cat-item" onclick="location.hash='plp?category=${encodeURIComponent(c.name)}'">
-            <div class="cat-icon-circle">${c.icon || '📦'}</div>
-            <span>${c.name}</span>
-          </div>
-        `;
-      }).join('')}
-    `;
-  } catch(e) {
-    console.error("Error loading categories strip:", e);
-  }
-}
-
 window.addToCart = (id, title, price, image) => {
   window.cart.push({ id, title, price, image });
   localStorage.setItem('arcanix_cart', JSON.stringify(window.cart));
@@ -487,18 +412,62 @@ window.deleteItemByAdmin = async (colName, id) => {
   }
 };
 
-// 1. HOME PAGE
+// 1. HOME PAGE WITH CATEGORY DROPDOWN
 async function renderHomePage() {
   appContainer.innerHTML = `
     <div id="home-slider-container" style="margin-bottom: 16px;"></div>
+
     <div style="background: #fff; padding: 16px; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-      <h2 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 14px; color:#212121;">Deals of the Day</h2>
+      
+      <!-- Category Dropdown Filter Bar -->
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; border-bottom: 1px solid #f0f0f0; padding-bottom: 12px;">
+        <h2 style="font-size: 1.1rem; font-weight: 700; color:#212121;" id="grid-title">Deals of the Day</h2>
+        
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <label style="font-size: 0.85rem; font-weight: 600; color: #666;">Category:</label>
+          <select id="homepage-cat-dropdown" onchange="handleHomeCategoryChange(this.value)" style="padding: 8px 12px; border: 1px solid #2874f0; border-radius: 4px; background: #fff; font-size: 0.85rem; font-weight: 600; color: #2874f0; outline: none; cursor: pointer;">
+            <option value="">All Categories 📦</option>
+          </select>
+        </div>
+      </div>
+
       <div class="products-grid" id="home-products-grid"><p style="color: #666;">Loading store items...</p></div>
     </div>
   `;
+
   fetchBanners();
+  populateHomeCategoryDropdown();
   fetchProductsGrid(document.getElementById('home-products-grid'));
 }
+
+// Populate Homepage Category Dropdown from Firestore
+async function populateHomeCategoryDropdown() {
+  const catSelect = document.getElementById('homepage-cat-dropdown');
+  if (!catSelect) return;
+  try {
+    const snap = await getDocs(collection(db, "categories"));
+    if (!snap.empty) {
+      snap.docs.forEach(docSnap => {
+        const c = docSnap.data();
+        const option = document.createElement('option');
+        option.value = c.name;
+        option.textContent = `${c.icon || '📦'} ${c.name}`;
+        catSelect.appendChild(option);
+      });
+    }
+  } catch(e) {
+    console.error("Error loading categories dropdown:", e);
+  }
+}
+
+// Handle Homepage Category Dropdown Selection
+window.handleHomeCategoryChange = function(selectedCat) {
+  const gridTitle = document.getElementById('grid-title');
+  if (gridTitle) {
+    gridTitle.innerText = selectedCat ? `Category: ${selectedCat}` : "Deals of the Day";
+  }
+  fetchProductsGrid(document.getElementById('home-products-grid'), '', selectedCat);
+};
 
 async function fetchBanners() {
   const container = document.getElementById('home-slider-container');
@@ -718,7 +687,7 @@ function renderUserDashboardPage() {
   document.getElementById('so-btn').onclick = () => signOut(auth).then(() => location.hash = 'auth');
 }
 
-// 10. ADMIN DASHBOARD WITH DYNAMIC CATEGORY DROPDOWN
+// 10. ADMIN DASHBOARD
 async function renderSellerDashboardPage() {
   if (!currentUser || (currentUser.email && currentUser.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase())) {
     appContainer.innerHTML = `<div style="padding:20px; background:#fff;"><h2>Access Denied</h2><p>Only authorized admin can access this page.</p></div>`;
@@ -751,7 +720,7 @@ async function renderSellerDashboardPage() {
 
       </div>
 
-      <!-- SECTION C: Add Product (Uses Dynamic Dropdown for Categories) -->
+      <!-- SECTION C: Add Product -->
       <form id="seller-add-form" style="background: #fafafa; padding: 16px; border: 1px solid #eee; border-radius: 4px; margin-bottom: 24px;">
         <h4 style="margin-bottom: 12px;">3. Publish New Product</h4>
         <div style="display: flex; flex-wrap: wrap; gap: 12px;">
@@ -778,7 +747,7 @@ async function renderSellerDashboardPage() {
     </div>
   `;
 
-  // Dynamically Populate Dropdown Options from Firestore Categories
+  // Populate Dropdown for Admin Panel Product Form
   async function populateCategoryDropdown() {
     const catSelect = document.getElementById('p-category');
     if (!catSelect) return;
@@ -821,8 +790,6 @@ async function renderSellerDashboardPage() {
 
       alert(`Category "${catName}" added!`);
       document.getElementById('admin-cat-form').reset();
-      
-      await loadDynamicCategoriesStrip();
       await populateCategoryDropdown();
     } catch (err) {
       alert("Error adding category: " + err.message);
@@ -900,7 +867,7 @@ async function renderSellerDashboardPage() {
   }
 }
 
-// Fetch Amazon/Flipkart Styled Product Grid
+// Fetch Product Grid
 async function fetchProductsGrid(container, searchQuery = '', categoryFilter = '') {
   try {
     const snap = await getDocs(collection(db, "products"));
@@ -911,12 +878,14 @@ async function fetchProductsGrid(container, searchQuery = '', categoryFilter = '
       return;
     }
 
+    let matchFound = false;
     snap.forEach((docSnap) => {
       const p = docSnap.data();
       
       if (searchQuery && !p.title.toLowerCase().includes(searchQuery.toLowerCase())) return;
       if (categoryFilter && p.category !== categoryFilter) return;
 
+      matchFound = true;
       container.innerHTML += `
         <div class="product-card" onclick="location.hash='pdp?id=${docSnap.id}'">
           <img src="${p.imageUrl || 'https://via.placeholder.com/200'}" class="product-card-img"/>
@@ -931,6 +900,10 @@ async function fetchProductsGrid(container, searchQuery = '', categoryFilter = '
         </div>
       `;
     });
+
+    if (!matchFound) {
+      container.innerHTML = '<p style="grid-column: 1/-1; color:#878787;">No products available for this category.</p>';
+    }
   } catch (err) {
     container.innerHTML = `<p>Error loading store items.</p>`;
   }
